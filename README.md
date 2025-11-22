@@ -58,10 +58,11 @@ cargo build
 The program accepts command-line arguments for HTML and CSS files:
 
 ```bash
-cargo run -- --html <html_file> --css <css_file> --output <output_file>
+cargo run -- -html <html_file> -css <css_file> -output <output_file>
 ```
 
 **Default behavior** (if no arguments provided):
+
 - HTML: `./test.html`
 - CSS: `./test.css`
 - Output: `./output.png`
@@ -75,6 +76,7 @@ cargo run -- --html test.html --css test.css --output result.png
 ### Example Input
 
 **test.html:**
+
 ```html
 <html lang="en">
   <head>
@@ -99,18 +101,33 @@ cargo run -- --html test.html --css test.css --output result.png
 ```
 
 **test.css:**
+
 ```css
 * {
   display: block;
   padding: 12px;
 }
-.a { background: #ff0000; }
-.b { background: #ffa500; }
-.c { background: #ffff00; }
-.d { background: #008000; }
-.e { background: #0000ff; }
-.f { background: #4b0082; }
-.g { background: #800080; }
+.a {
+  background: #ff0000;
+}
+.b {
+  background: #ffa500;
+}
+.c {
+  background: #ffff00;
+}
+.d {
+  background: #008000;
+}
+.e {
+  background: #0000ff;
+}
+.f {
+  background: #4b0082;
+}
+.g {
+  background: #800080;
+}
 ```
 
 This will produce a PNG image with nested colored rectangles.
@@ -144,6 +161,7 @@ The following features are planned for future implementation:
 ## References
 
 This project is based on the tutorial series by Matt Brubeck:
+
 - [Part 1: Getting started](https://limpet.net/mbrubeck/2014/08/08/toy-layout-engine-1.html)
 - [Part 2: HTML](https://limpet.net/mbrubeck/2014/08/11/toy-layout-engine-2-html.html)
 - [Part 3: CSS](https://limpet.net/mbrubeck/2014/08/13/toy-layout-engine-3-css.html)
@@ -155,4 +173,3 @@ This project is based on the tutorial series by Matt Brubeck:
 ## License
 
 This is an educational project based on the tutorial series mentioned above.
-
