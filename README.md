@@ -58,7 +58,7 @@ cargo build
 The program accepts command-line arguments for HTML and CSS files:
 
 ```bash
-cargo run -- -html <html_file> -css <css_file> -output <output_file>
+cargo run -- --html <html_file> --css <css_file> --output <output_file>
 ```
 
 **Default behavior** (if no arguments provided):
@@ -70,7 +70,7 @@ cargo run -- -html <html_file> -css <css_file> -output <output_file>
 **Example:**
 
 ```bash
-cargo run -- --html test.html --css test.css --output result.png
+cargo run -- -html test.html -css test.css -output result.png
 ```
 
 ### Example Input
