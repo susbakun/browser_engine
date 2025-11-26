@@ -104,7 +104,7 @@ impl Canvas {
 
     fn paint_item(&mut self, item: &DisplayCommand) {
         match item {
-            & DisplayCommand::SolidColor(color, rect) => {
+            & DisplayCommand::SolidColor(foreground_color, rect) => {
                 let x0 = rect.x.clamp(0.0, self.width as f32) as usize;
                 let y0 = rect.y.clamp(0.0, self.height as f32) as usize;
                 let x1 = (rect.x + rect.width).clamp(0.0, self.width as f32) as usize;
@@ -113,7 +113,11 @@ impl Canvas {
 
                 for y in y0..y1{
                     for x in x0..x1 {
-                        self.pixels[x + y * self.width] = color;
+                        let background_color = self.pixels[x + y * self.width];
+
+                        let result = foreground_color.get_blended_color(background_color);
+
+                        self.pixels[x + y * self.width] = result;
                     }
                 }
             }

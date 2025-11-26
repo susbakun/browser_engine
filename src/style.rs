@@ -1,7 +1,8 @@
 use std::collections::HashMap;
 use super::css::Value;
 use super::dom::{ElementData, Node, NodeType};
-use super::css::{Rule, SimpleSelector, Selector, Specificity, Stylesheet};
+use super::css::{Rule, SimpleSelector, Selector, 
+    Specificity, Stylesheet, Parser as CssParser};
 
 type PropertyMap = HashMap<String, Value>;
 
@@ -73,6 +74,18 @@ fn matching_rules<'a>(element: &ElementData, stylesheet: &'a Stylesheet) -> Vec<
     stylesheet.rules.iter().filter_map(|rule| match_rule(element, rule)).collect()
 }
 
+fn add_inline_styles(element: &ElementData, values: &mut HashMap<String, Value>) {
+    if element.attrs.contains_key("style"){
+        let styles = element.attrs.get("style")
+            .expect("The element does have a style attribute");
+        let declrations = CssParser::parse_inline_style(styles.to_string());
+
+        declrations.iter().for_each(|dec| {
+            values.insert(dec.name.clone(), dec.value.clone());
+        });
+    }
+}
+
 fn specified_values(element: &ElementData, stylesheet: &Stylesheet) -> PropertyMap {
     let mut values = HashMap::new();
     let mut rules = matching_rules(element, stylesheet);
@@ -83,6 +96,9 @@ fn specified_values(element: &ElementData, stylesheet: &Stylesheet) -> PropertyM
             values.insert(decrlation.name.clone(), decrlation.value.clone());
         }
     }
+
+    add_inline_styles(element, &mut values);
+
     values
 }
 

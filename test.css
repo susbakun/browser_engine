@@ -6,11 +6,9 @@ head {
   padding: 12px;
 }
 
-div.a {
-  background: #ff0000;
-}
+
 div.b {
-  background: #ffa500;
+  background: #ffa500aa;
 }
 div.c {
   background: #ffff00;

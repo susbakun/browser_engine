@@ -1,3 +1,5 @@
+use std::ops::Add;
+
 pub struct Stylesheet {
     pub rules: Vec<Rule>,
 }
@@ -42,6 +44,45 @@ pub struct Color {
     pub a: u8
 }
 
+impl Color {
+    pub fn get_blended_color(&self, background_color: Color) -> Self {
+        let alpha = self.get_normalized_alpha();
+
+        let result_r = (self.r as f32 * alpha) + (background_color.r as f32 * (1.0 - alpha));
+        let result_g = (self.g as f32 * alpha) + (background_color.g as f32 * (1.0 - alpha));
+        let result_b = (self.b as f32 * alpha) + (background_color.b as f32 * (1.0 - alpha));
+
+        let result_r = result_r.clamp(0.0, 255.0) as u8;
+        let result_g = result_g.clamp(0.0, 255.0) as u8;
+        let result_b = result_b.clamp(0.0, 255.0) as u8;
+
+        Self { 
+            r: result_r, 
+            g: result_g, 
+            b: result_b, 
+            a: 255 
+        }
+    }
+
+    pub fn get_normalized_alpha(&self) -> f32 {
+        self.a as f32 / 255.0
+    }
+
+}
+
+impl Add<Color> for Color {
+    type Output = Color;
+
+    fn add(self, rhs: Color) -> Self::Output {
+        Self {
+            r: self.r + rhs.r,
+            g: self.g + rhs.g,
+            b: self.b + rhs.b,
+            a: self.a + rhs.a
+        }
+    }
+}
+
 
 pub type Specificity = (usize, usize, usize);
 
@@ -70,7 +111,8 @@ pub fn parse(source: String) -> Stylesheet {
     Stylesheet { rules: parser.parse_rules() }
 }
 
-struct Parser {
+
+pub struct Parser {
     input: String,
     pos: usize
 }
@@ -147,6 +189,7 @@ impl Parser {
     }
 
     fn parse_declration(&mut self) -> Declartion {
+        self.consume_whitespace();
         let name = self.parse_identifier();
         self.consume_whitespace();
         self.expect(":");
@@ -182,22 +225,55 @@ impl Parser {
 
     fn parse_color(&mut self) -> Value {
         self.expect("#");
-        Value::ColorValue(Color {
-            r: self.parse_hex_pair(),
-            g: self.parse_hex_pair(),
-            b: self.parse_hex_pair(),
-            a: 255
-        })
+        let color_channels = self.count_color_channels();
+
+        let r = self.parse_hex_pair();
+        let g = self.parse_hex_pair();
+        let b = self.parse_hex_pair();
+
+        let a = if color_channels < 8 {
+            255
+        }else {
+            self.parse_hex_pair()
+        };
+
+        Value::ColorValue(Color {r, g, b, a })
+    }
+
+    fn count_color_channels(& mut self) -> u8 {
+        let mut counter = 0;
+        let origin = self.pos;
+
+        while self.next_char() != ';'{
+            counter += 1;
+            self.pos += 1;
+        }
+
+        self.pos = origin;
+
+        counter
     }
 
     fn parse_hex_pair(&mut self) -> u8 {
         let val = &self.input[self.pos..self.pos+2];
         self.pos += 2;
-        u8::from_str_radix(val, 16).unwrap()
+        return u8::from_str_radix(val, 16).unwrap()
     }
 
     fn parse_identifier(&mut self) -> String {
         self.consume_while(valid_identifier_char)
+    }
+
+    pub fn parse_inline_style(source: String) -> Vec<Declartion>{
+        let mut parser = Parser {input: source, pos: 0};
+        let mut declrations = vec![];
+        loop {
+            if parser.eof() {break};
+            let declration = parser.parse_declration();
+            declrations.push(declration);
+        }
+
+        declrations
     }
 
     fn next_char(&self) -> char {

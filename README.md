@@ -28,6 +28,9 @@ This browser engine implements a simplified rendering pipeline that transforms H
 - ✅ Padding support
 - ✅ Nested block elements
 - ✅ PNG output
+- ✅ Alpha channel support and transparency blending
+- ✅ Hex color parsing with alpha channel (#rrggbbaa format)
+- ✅ Inline CSS styles via HTML `style` attribute
 
 ## Architecture
 
@@ -132,6 +135,30 @@ cargo run -- -html test.html -css test.css -output result.png
 
 This will produce a PNG image with nested colored rectangles.
 
+**Alpha Channel Support:**
+
+You can use hex colors with alpha channel by using 8 hex digits instead of 6:
+
+```css
+.semi-transparent {
+  background: #ff000080; /* Red with 50% opacity (128/255) */
+}
+```
+
+The engine performs alpha compositing, blending semi-transparent colors with the background colors underneath them.
+
+**Inline Styles:**
+
+You can use inline CSS styles directly in HTML elements using the `style` attribute:
+
+```html
+<div style="background: #00ff00; padding: 20px;">
+  This div has an inline style
+</div>
+```
+
+Inline styles have higher specificity than stylesheet rules and will override matching CSS rules.
+
 ## Dependencies
 
 - **`getopts`** - Command-line argument parsing
@@ -144,9 +171,8 @@ The following features are planned for future implementation:
 1. **Cascading** - Proper CSS cascade order and specificity resolution
 2. **Initial and/or computed values** - Default values for CSS properties
 3. **Inheritance** - CSS property inheritance from parent to child elements
-4. **The `style` attribute** - Support for inline styles via the HTML `style` attribute
-5. **Collapsing vertical margins** - CSS margin collapsing behavior
-6. **Supporting alpha** - Alpha compositing and transparency support (RGBA colors, opacity)
+4. **Collapsing vertical margins** - CSS margin collapsing behavior
+5. **RGBA function support** - Support for `rgba(r, g, b, a)` CSS color syntax
 
 ## Limitations
 
@@ -154,7 +180,7 @@ The following features are planned for future implementation:
 - No text rendering
 - No support for many CSS properties
 - No z-index support
-- No transparency/alpha blending
+- No support for `rgba()` function syntax (only hex colors with alpha: #rrggbbaa)
 - Simplified CSS selector matching
 - No support for CSS inheritance or cascading
 

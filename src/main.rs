@@ -1,3 +1,4 @@
+#![allow(clippy::all, clippy::pedantic)]
 extern crate getopts;
 
 use std::{fs::{self, File}, io::BufWriter};
