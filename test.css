@@ -6,9 +6,8 @@ head {
   padding: 12px;
 }
 
-
 div.b {
-  background: #ffa500aa;
+  background: #ffa500a5;
 }
 div.c {
   background: #ffff00;
@@ -23,5 +22,5 @@ div.f {
   background: #4b0082;
 }
 div.g {
-  background: #800080;
+  background: rgb(10 20 30 / 0.25);
 }
