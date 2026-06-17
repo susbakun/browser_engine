@@ -1,6 +1,6 @@
 # Browser Engine
 
-A toy browser rendering engine written in Rust that parses HTML and CSS, applies styling, performs layout calculations, and renders the result to a PNG image.
+A toy browser rendering engine written in Rust that parses HTML and CSS, applies styling, performs layout calculations, and displays the result in a live window.
 
 This project is based on the excellent tutorial series ["Let's build a browser engine!"](https://limpet.net/mbrubeck/2014/11/05/toy-layout-engine-7-painting.html) by Matt Brubeck.
 
@@ -8,11 +8,12 @@ This project is based on the excellent tutorial series ["Let's build a browser e
 
 This browser engine implements a simplified rendering pipeline that transforms HTML and CSS into a visual representation. The engine follows the standard browser rendering pipeline:
 
-1. **HTML Parsing** - Parses HTML into a DOM tree
-2. **CSS Parsing** - Parses CSS rules and declarations
-3. **Style** - Matches CSS rules to DOM nodes and builds a style tree
-4. **Layout** - Calculates the position and size of each element (block layout)
-5. **Painting** - Rasterizes the layout tree into pixels and outputs a PNG image
+1. **HTML Parsing** — Parses HTML into a DOM tree
+2. **CSS Parsing** — Parses CSS rules and declarations
+3. **Style** — Matches CSS rules to DOM nodes and builds a style tree
+4. **Layout** — Calculates the position and size of each element (block layout)
+5. **Painting** — Rasterizes the layout tree into a pixel buffer
+6. **Window** — Displays the pixel buffer in a live window (winit + pixels)
 
 ## Features
 
@@ -27,22 +28,25 @@ This browser engine implements a simplified rendering pipeline that transforms H
 - ✅ Border rendering
 - ✅ Padding support
 - ✅ Nested block elements
-- ✅ PNG output
+- ✅ Live window display (800×600)
 - ✅ Alpha channel support and transparency blending
-- ✅ Hex color parsing with alpha channel (#rrggbbaa format)
+- ✅ Hex color parsing with alpha channel (`#rrggbbaa` format)
 - ✅ RGB function support with optional alpha channel (`rgb(r, g, b)` and `rgb(r, g, b / alpha)`)
 - ✅ Inline CSS styles via HTML `style` attribute
+- ✅ `display: none` support (e.g. hide `<head>`)
 
 ## Architecture
 
 The project is organized into several modules:
 
-- **`dom.rs`** - DOM node structure and tree representation
-- **`html.rs`** - HTML parser
-- **`css.rs`** - CSS parser and value types
-- **`style.rs`** - Style tree construction and CSS rule matching
-- **`layout.rs`** - Block layout algorithm and box model calculations
-- **`painting.rs`** - Display list generation and rasterization
+- **`dom.rs`** — DOM node structure and tree representation
+- **`html.rs`** — HTML parser
+- **`css.rs`** — CSS parser and value types
+- **`style.rs`** — Style tree construction and CSS rule matching
+- **`layout.rs`** — Block layout algorithm and box model calculations
+- **`painting.rs`** — Display list generation and rasterization
+- **`window.rs`** — Live window creation and pixel buffer display
+- **`cli.rs`** — Command-line argument parsing
 
 ## Usage
 
@@ -59,86 +63,86 @@ cargo build
 
 ### Running
 
-The program accepts command-line arguments for HTML and CSS files:
+The program accepts command-line arguments for HTML and CSS files and opens a window with the rendered result:
 
 ```bash
-cargo run -- --html <html_file> --css <css_file> --output <output_file>
+cargo run -- --html <html_file> --css <css_file>
 ```
 
 **Default behavior** (if no arguments provided):
 
 - HTML: `./test.html`
 - CSS: `./test.css`
-- Output: `./output.png`
 
 **Example:**
 
 ```bash
-cargo run -- -html test.html -css test.css -output result.png
+cargo run -- -h test.html -c test.css
 ```
+
+Press **Escape** or close the window to exit.
 
 ### Example Input
 
 **test.html:**
 
 ```html
-<html lang="en">
-  <head>
-    <title>Document</title>
-  </head>
-  <body>
-    <div class="a">
-      <div class="b">
-        <div class="c">
-          <div class="d">
-            <div class="e">
-              <div class="f">
-                <div class="g"></div>
-              </div>
+<head>
+  <title>Document</title>
+</head>
+<body>
+  <div style="background: #ff000095;">
+    <div class="b">
+      <div class="c">
+        <div class="d">
+          <div class="e">
+            <div class="f">
+              <div class="g"></div>
             </div>
           </div>
         </div>
       </div>
     </div>
-  </body>
-</html>
+  </div>
+</body>
 ```
 
 **test.css:**
 
 ```css
+head {
+  display: none;
+}
 * {
   display: block;
   padding: 12px;
 }
-.a {
-  background: #ff0000;
+
+div.b {
+  background: #ffa500a5;
 }
-.b {
-  background: #ffa500;
-}
-.c {
+div.c {
   background: #ffff00;
 }
-.d {
+div.d {
   background: #008000;
 }
-.e {
+div.e {
   background: #0000ff;
 }
-.f {
+div.f {
   background: #4b0082;
 }
-.g {
-  background: #800080;
+div.g {
+  background: rgb(10 20 30 / 0.25);
 }
 ```
 
-This will produce a PNG image with nested colored rectangles.
+This renders nested colored rectangles with semi-transparent backgrounds in the window.
 
 **Color Formats:**
 
-You can use hex colors with alpha channel by using 8 hex digits instead of 6:
+You can use hex colors with an alpha channel by using 8 hex digits instead of 6:
 
 ```css
 .semi-transparent {
@@ -174,26 +178,33 @@ Inline styles have higher specificity than stylesheet rules and will override ma
 
 ## Dependencies
 
-- **`getopts`** - Command-line argument parsing
-- **`image`** - PNG image encoding
+- **`anyhow`** — Error handling
+- **`getopts`** — Command-line argument parsing
+- **`pixels`** — Pixel buffer rendering
+- **`winit`** — Cross-platform window creation
+- **`winit_input_helper`** — Keyboard and window input handling
 
 ## TODO / Planned Features
 
 The following features are planned for future implementation:
 
-1. **Cascading** - Proper CSS cascade order and specificity resolution
-2. **Initial and/or computed values** - Default values for CSS properties
-3. **Inheritance** - CSS property inheritance from parent to child elements
-4. **Collapsing vertical margins** - CSS margin collapsing behavior
-5. **Text rendering** - Rendering text on screen
+1. **`<img>` tag rendering** — Load and display images (see `report.md` for the full implementation plan)
+2. **Cascading** — Proper CSS cascade order and specificity resolution
+3. **Initial and/or computed values** — Default values for CSS properties
+4. **Inheritance** — CSS property inheritance from parent to child elements
+5. **Collapsing vertical margins** — CSS margin collapsing behavior
+6. **Text rendering** — Rendering text on screen
+7. **Inline layout** — Layout for inline elements
 
 ## Limitations
 
-- Only supports block-level layout (no inline layout yet)
+- Only supports block-level layout (inline layout is not yet implemented)
+- No `<img>` or other replaced element support yet
 - No support for many CSS properties
 - No z-index support
 - Simplified CSS selector matching
 - No support for CSS inheritance or cascading
+- Fixed viewport size (800×600)
 
 ## References
 
