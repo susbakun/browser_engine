@@ -4,7 +4,7 @@ use crate::dom;
 
 struct Parser {
     pos: usize,
-    input: String
+    input: String,
 }
 
 impl Parser {
@@ -16,10 +16,10 @@ impl Parser {
         self.input[self.pos..].starts_with(s)
     }
 
-    fn expect(&mut self, s: &str){
-        if self.input[self.pos..].starts_with(s){
+    fn expect(&mut self, s: &str) {
+        if self.input[self.pos..].starts_with(s) {
             self.pos += s.len();
-        }else{
+        } else {
             println!("{:?}", self.input.get(self.pos..));
             panic!("Expected {:?} at byte {} but it was not found", s, self.pos)
         }
@@ -37,7 +37,7 @@ impl Parser {
 
     fn consume_while(&mut self, test: impl Fn(char) -> bool) -> String {
         let mut result = String::new();
-        while !self.eof() && test(self.next_char()){
+        while !self.eof() && test(self.next_char()) {
             result.push(self.consume_char())
         }
 
@@ -52,8 +52,7 @@ impl Parser {
         self.consume_while(|c| matches!(c, 'a'..'z' | 'A'..'Z' | '0'..'9'))
     }
 
-
-    fn parse_attr(&mut self) -> (String, String){
+    fn parse_attr(&mut self) -> (String, String) {
         let name = self.parse_name();
         self.expect("=");
         let value = self.parse_attr_value();
@@ -74,7 +73,7 @@ impl Parser {
         let mut attributes = HashMap::new();
         loop {
             self.consume_whitespace();
-            if self.next_char() == '>'{
+            if self.next_char() == '>' {
                 break;
             }
             let (name, value) = self.parse_attr();
@@ -102,10 +101,10 @@ impl Parser {
         dom::element(tag_name, attrs, children)
     }
 
-    fn parse_node(&mut self) -> dom::Node{
-        if self.starts_with("<"){
+    fn parse_node(&mut self) -> dom::Node {
+        if self.starts_with("<") {
             self.parse_element()
-        }else {
+        } else {
             self.parse_text()
         }
     }
@@ -114,7 +113,7 @@ impl Parser {
         let mut nodes = Vec::new();
         loop {
             self.consume_whitespace();
-            if self.eof() || self.starts_with("</"){
+            if self.eof() || self.starts_with("</") {
                 break;
             }
 
@@ -123,32 +122,31 @@ impl Parser {
 
         nodes
     }
-
-    
 }
 
 pub fn parse(source: String) -> dom::Node {
-    let mut nodes = Parser {pos: 0, input: source}.parse_nodes();
+    let mut nodes = Parser {
+        pos: 0,
+        input: source,
+    }
+    .parse_nodes();
 
-    if nodes.len() == 1{
-        return nodes.remove(0)
-    }else {
+    if nodes.len() == 1 {
+        return nodes.remove(0);
+    } else {
         dom::element("html".to_string(), HashMap::new(), nodes)
     }
 }
 
-
-
 #[cfg(test)]
-mod tests{
+mod tests {
     use std::fs;
 
     use super::*;
 
     #[test]
-    fn parse_correct_html(){
-        let html_code = fs::read_to_string("./test.html")
-            .expect("Couldn't read the file");
+    fn parse_correct_html() {
+        let html_code = fs::read_to_string("./test.html").expect("Couldn't read the file");
         parse(html_code);
     }
 }
