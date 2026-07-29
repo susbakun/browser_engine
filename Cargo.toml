@@ -5,6 +5,7 @@ edition = "2024"
 
 [dependencies]
 anyhow = "1.0.102"
+fontdue = "0.9.4"
 getopts = "0.2.24"
 pixels = "0.17.1"
 winit = "0.30.13"
