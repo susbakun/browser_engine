@@ -5,6 +5,7 @@ use anyhow::Result;
 use crate::painting::get_canvas;
 
 mod cli;
+mod constants;
 mod css;
 mod dom;
 mod html;

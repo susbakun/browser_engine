@@ -1,5 +1,6 @@
 use super::{HEIGHT, WIDTH};
 
+use crate::constants::ROBOTO;
 use crate::css::{self, Value};
 use crate::{html, layout, style};
 
@@ -10,6 +11,7 @@ type DisplayList = Vec<DisplayCommand>;
 
 enum DisplayCommand {
     SolidColor(Color, Rect),
+    Text(String, Rect, Color, f32),
 }
 
 fn build_display_list(layout_root: &LayoutBox) -> DisplayList {
@@ -21,6 +23,8 @@ fn build_display_list(layout_root: &LayoutBox) -> DisplayList {
 fn render_layout_box(list: &mut DisplayList, layout_box: &LayoutBox) {
     render_background(list, layout_box);
     render_borders(list, layout_box);
+
+    redner_text(list, layout_box);
 
     for child in layout_box.children.iter() {
         render_layout_box(list, &child);
@@ -93,12 +97,33 @@ fn render_borders(list: &mut DisplayList, layout_box: &LayoutBox) {
     ));
 }
 
+fn redner_text(list: &mut DisplayList, layout_box: &LayoutBox) {
+    let color = get_color("color", layout_box);
+
+    let text = match layout_box.box_type {
+        BoxType::TextNode(_, text) => text,
+        _ => return,
+    };
+
+    if let Some(color) = color {
+        list.push(DisplayCommand::Text(
+            text.clone(),
+            layout_box.dimension.border_box(),
+            color,
+            // TODO: font size should be changed here
+            16.0,
+        ));
+    }
+}
+
 fn get_color(name: &str, layout_box: &LayoutBox) -> Option<Color> {
     match layout_box.box_type {
-        BoxType::BlockNode(style) | BoxType::InlineNode(style) => match style.value(name) {
-            Some(Value::ColorValue(color)) => Some(color),
-            _ => None,
-        },
+        BoxType::BlockNode(style) | BoxType::InlineNode(style) | BoxType::TextNode(style, _) => {
+            match style.value(name) {
+                Some(Value::ColorValue(color)) => Some(color),
+                _ => None,
+            }
+        }
         BoxType::AnonymousBlock => None,
     }
 }
@@ -124,8 +149,8 @@ impl Canvas {
         }
     }
 
-    fn paint_item(&mut self, item: &DisplayCommand) {
-        match item {
+    fn paint_item(&mut self, item: &DisplayCommand, font: &fontdue::Font) {
+        match &item {
             &DisplayCommand::SolidColor(foreground_color, rect) => {
                 let x0 = rect.x.clamp(0.0, self.width as f32) as usize;
                 let y0 = rect.y.clamp(0.0, self.height as f32) as usize;
@@ -142,6 +167,27 @@ impl Canvas {
                     }
                 }
             }
+            &DisplayCommand::Text(text, rect, color, size) => {
+                let mut pen_x = rect.x;
+                for ch in text.chars() {
+                    let (metrics, bitmap) = font.rasterize(ch, *size);
+                    for y in 0..metrics.height {
+                        for x in 0..metrics.width {
+                            let coverage = bitmap[y * metrics.width + x];
+                            if coverage == 0 {
+                                continue;
+                            }
+
+                            let px = pen_x as usize + x;
+                            let py = rect.y as usize + y;
+                            let bg = self.pixels[px + py * self.width];
+                            let blended = color.get_blended_color(bg);
+                            self.pixels[px + py * self.width] = blended;
+                        }
+                    }
+                    pen_x += metrics.advance_width;
+                }
+            }
         }
     }
 }
@@ -151,20 +197,22 @@ pub fn get_canvas(html: String, css: String) -> Canvas {
     viewport.content.width = WIDTH as f32;
     viewport.content.height = HEIGHT as f32;
 
+    let font = fontdue::Font::from_bytes(ROBOTO, fontdue::FontSettings::default()).unwrap();
+
     let root_node = html::parse(html);
     let stylesheet = css::parse(css);
     let style_root = style::style_tree(&root_node, &stylesheet);
-    let layout_root = layout::layout_tree(&style_root, viewport);
+    let layout_root = layout::layout_tree(&style_root, viewport, &font);
 
-    paint(&layout_root, viewport.content)
+    paint(&layout_root, viewport.content, &font)
 }
 
-fn paint(layout_root: &LayoutBox, bounds: Rect) -> Canvas {
+fn paint(layout_root: &LayoutBox, bounds: Rect, font: &fontdue::Font) -> Canvas {
     let display_list = build_display_list(layout_root);
     let mut canvas = Canvas::new(bounds.width as usize, bounds.height as usize);
 
     for item in display_list {
-        canvas.paint_item(&item);
+        canvas.paint_item(&item, &font);
     }
 
     canvas

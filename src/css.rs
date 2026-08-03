@@ -252,7 +252,7 @@ impl Parser {
 
     fn parse_rgb_format_color(&mut self) -> Value {
         self.expect("(");
-        
+
         let parse_color_component = |parser: &mut Self| -> u8 {
             parser.consume_whitespace();
             let value = u8::from_str_radix(&parser.parse_number(), 10)
@@ -261,12 +261,11 @@ impl Parser {
             value
         };
 
-        
         let r = parse_color_component(self);
         let g = parse_color_component(self);
         let b = parse_color_component(self);
         let mut a = 255;
-        
+
         // checking for alpha channel
         if self.next_char() == '/' {
             self.consume_char();
@@ -277,7 +276,7 @@ impl Parser {
         self.expect(")");
         self.consume_whitespace();
 
-        Value::ColorValue(Color { r, g, b, a})
+        Value::ColorValue(Color { r, g, b, a })
     }
 
     fn parse_hex_format_color(&mut self) -> Value {
@@ -384,8 +383,7 @@ fn valid_numeric_char(c: char) -> bool {
 }
 
 fn valid_identifier_char(c: char) -> bool {
-    matches!(c, 'a'..'z' | 'A'..'Z' | '-' | '_') || 
-    valid_numeric_char(c)
+    matches!(c, 'a'..'z' | 'A'..'Z' | '-' | '_') || valid_numeric_char(c)
 }
 
 #[cfg(test)]

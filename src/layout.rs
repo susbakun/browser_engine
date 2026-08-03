@@ -1,3 +1,6 @@
+use crate::dom::NodeType;
+use crate::layout::BoxType::BlockNode;
+
 use super::css::{Unit, Value};
 use super::style::{Display, StyleNode};
 
@@ -12,7 +15,6 @@ pub struct Rect {
 #[derive(Default, Clone, Copy)]
 pub struct Dimensions {
     pub content: Rect,
-
     padding: EdgeSizes,
     margin: EdgeSizes,
     pub border: EdgeSizes,
@@ -35,24 +37,37 @@ pub struct LayoutBox<'a> {
 pub enum BoxType<'a> {
     InlineNode(&'a StyleNode<'a>),
     BlockNode(&'a StyleNode<'a>),
+    TextNode(&'a StyleNode<'a>, &'a String),
     AnonymousBlock,
 }
 
-pub fn layout_tree<'a>(style_node: &'a StyleNode<'a>, mut containing_block: Dimensions) -> LayoutBox<'a> {
+pub fn layout_tree<'a>(
+    style_node: &'a StyleNode<'a>,
+    mut containing_block: Dimensions,
+    font: &fontdue::Font,
+) -> LayoutBox<'a> {
     containing_block.content.height = 0.0;
 
     let mut root = build_layout_tree(style_node);
-    root.layout(containing_block);
+    root.layout(containing_block, Some(font));
 
     root
 }
 
 fn build_layout_tree<'a>(style_node: &'a StyleNode<'a>) -> LayoutBox<'a> {
     let mut root = LayoutBox::new(match style_node.display() {
-        Display::Block => BoxType::BlockNode(style_node),
+        Display::Block => match &style_node.node.node_type {
+            NodeType::Text(text) => BoxType::TextNode(style_node, text),
+            _ => BlockNode(style_node),
+        },
         Display::Inline => BoxType::InlineNode(style_node),
         Display::None => panic!("Root node has none display"),
     });
+
+    // Do not need to explore the children for text boxes
+    if matches!(root.box_type, BoxType::TextNode(..)) {
+        return root;
+    }
 
     for child in &style_node.children {
         match child.display() {
@@ -79,7 +94,9 @@ impl<'a> LayoutBox<'a> {
 
     fn get_style_node(&self) -> &StyleNode<'_> {
         match self.box_type {
-            BoxType::BlockNode(node) | BoxType::InlineNode(node) => node,
+            BoxType::BlockNode(node) | BoxType::InlineNode(node) | BoxType::TextNode(node, _) => {
+                node
+            }
             BoxType::AnonymousBlock => panic!("Anonymous block box has no style node"),
         }
     }
@@ -97,12 +114,14 @@ impl<'a> LayoutBox<'a> {
                 }
                 self.children.last_mut().unwrap()
             }
+            _ => unreachable!(),
         }
     }
 
-    fn layout(&mut self, containing_block: Dimensions) {
+    fn layout(&mut self, containing_block: Dimensions, font: Option<&fontdue::Font>) {
         match self.box_type {
             BoxType::BlockNode(_) => self.layout_block(containing_block),
+            BoxType::TextNode(_, ..) => self.layout_text(containing_block, font),
             BoxType::InlineNode(_) | BoxType::AnonymousBlock => {} //TODO:,
         }
     }
@@ -164,18 +183,17 @@ impl<'a> LayoutBox<'a> {
                 if margin_left == auto {
                     margin_left = Value::Length(0.0, Unit::Px);
                 }
-                
+
                 if margin_right == auto {
                     margin_right = Value::Length(0.0, Unit::Px);
                 }
-                
+
                 if underflow >= 0.0 {
                     width = Value::Length(underflow, Unit::Px);
-                }else {
+                } else {
                     width = Value::Length(0.0, Unit::Px);
                     margin_right = Value::Length(margin_right.to_px() + underflow, Unit::Px);
                 }
-
             }
             (false, true, true) => {
                 margin_left = Value::Length(underflow / 2.0, Unit::Px);
@@ -225,20 +243,18 @@ impl<'a> LayoutBox<'a> {
         d.padding.top = padding_top;
         d.padding.bottom = padding_bottom;
 
-        d.content.x =
-            containing_block.content.x + d.border.left + d.margin.left + d.padding.left;
+        d.content.x = containing_block.content.x + d.border.left + d.margin.left + d.padding.left;
 
         d.content.y = containing_block.content.y
             + containing_block.content.height
             + d.border.top
             + d.padding.top
             + d.margin.top;
-
     }
 
     fn layout_block_children(&mut self) {
         for child in &mut self.children {
-            child.layout(self.dimension);
+            child.layout(self.dimension, None);
             self.dimension.content.height += child.dimension.margin_box().height;
         }
     }
@@ -247,6 +263,67 @@ impl<'a> LayoutBox<'a> {
         if let Some(Value::Length(h, Unit::Px)) = self.get_style_node().value("height") {
             self.dimension.content.height = h;
         }
+    }
+
+    fn layout_text(&mut self, containing_block: Dimensions, font: Option<&fontdue::Font>) {
+        if let Some(font) = font {
+            self.calculate_text_span(font);
+            // same as block version
+            self.calculate_block_position(containing_block);
+        }
+    }
+
+    fn calculate_text_span(&mut self, font: &fontdue::Font) {
+        let style = self.get_style_node();
+
+        let text = match self.box_type {
+            BoxType::TextNode(_, text) => text,
+            _ => unreachable!(),
+        };
+
+        let font_size = match style.value("font-size") {
+            Some(Value::Length(s, Unit::Px)) => s,
+            _ => 16.0,
+        };
+
+        let zero = Value::Length(0.0, Unit::Px);
+
+        let width = text
+            .chars()
+            .map(|c| font.metrics(c, font_size).advance_width)
+            .sum::<f32>();
+
+        let height = font
+            .vertical_line_metrics(font_size)
+            .map(|m| m.new_line_size)
+            .unwrap_or(font_size);
+
+        let margin_left = style.lookup("margin-left", "margin", &zero).to_px();
+        let margin_right = style.lookup("margin-right", "margin", &zero).to_px();
+
+        let border_left = style
+            .lookup("border-left-width", "border-width", &zero)
+            .to_px();
+        let border_right = style
+            .lookup("border-right-width", "border-width", &zero)
+            .to_px();
+
+        let padding_left = style.lookup("padding-left", "padding", &zero).to_px();
+        let padding_right = style.lookup("padding-right", "padding", &zero).to_px();
+
+        let d = &mut self.dimension;
+
+        d.margin.left = margin_left;
+        d.margin.right = margin_right;
+
+        d.border.left = border_left;
+        d.border.right = border_right;
+
+        d.padding.left = padding_left;
+        d.padding.right = padding_right;
+
+        d.content.width = width;
+        d.content.height = height;
     }
 }
 
