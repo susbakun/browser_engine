@@ -1,6 +1,6 @@
 use super::{HEIGHT, WIDTH};
 
-use crate::constants::ROBOTO;
+use crate::constants::{BLACK, ROBOTO};
 use crate::css::{self, Value};
 use crate::{html, layout, style};
 
@@ -105,15 +105,15 @@ fn redner_text(list: &mut DisplayList, layout_box: &LayoutBox) {
         _ => return,
     };
 
-    if let Some(color) = color {
-        list.push(DisplayCommand::Text(
-            text.clone(),
-            layout_box.dimension.border_box(),
-            color,
-            // TODO: font size should be changed here
-            16.0,
-        ));
-    }
+    let color = color.unwrap_or(BLACK);
+
+    list.push(DisplayCommand::Text(
+        text.clone(),
+        layout_box.dimension.border_box(),
+        color,
+        // TODO: font size should be changed here
+        16.0,
+    ));
 }
 
 fn get_color(name: &str, layout_box: &LayoutBox) -> Option<Color> {

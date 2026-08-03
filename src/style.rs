@@ -116,12 +116,25 @@ fn specified_values(element: &ElementData, stylesheet: &Stylesheet) -> PropertyM
     values
 }
 
+fn text_node_values() -> PropertyMap {
+    let mut values = HashMap::new();
+
+    let styles = "display: block;";
+    let declrations = CssParser::parse_inline_style(styles.to_string());
+
+    declrations.iter().for_each(|dec| {
+        values.insert(dec.name.clone(), dec.value.clone());
+    });
+
+    values
+}
+
 pub fn style_tree<'a>(root: &'a Node, stylesheet: &'a Stylesheet) -> StyleNode<'a> {
     StyleNode {
         node: root,
         specified_values: match &root.node_type {
             NodeType::Element(element) => specified_values(&element, stylesheet),
-            NodeType::Text(_) => HashMap::new(),
+            NodeType::Text(_) => text_node_values(),
         },
         children: root
             .children
