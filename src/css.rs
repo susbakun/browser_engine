@@ -383,7 +383,7 @@ fn valid_numeric_char(c: char) -> bool {
 }
 
 fn valid_identifier_char(c: char) -> bool {
-    matches!(c, 'a'..'z' | 'A'..'Z' | '-' | '_') || valid_numeric_char(c)
+    matches!(c, 'a'..='z' | 'A'..='Z' | '-' | '_') || valid_numeric_char(c)
 }
 
 #[cfg(test)]
