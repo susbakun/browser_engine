@@ -266,9 +266,9 @@ impl<'a> LayoutBox<'a> {
     }
 
     fn layout_text(&mut self, containing_block: Dimensions, font: &fontdue::Font) {
-            self.calculate_text_span(font);
-            // same as block version
-            self.calculate_block_position(containing_block);
+        self.calculate_text_span(font);
+        // same as block version
+        self.calculate_block_position(containing_block);
     }
 
     fn calculate_text_span(&mut self, font: &fontdue::Font) {

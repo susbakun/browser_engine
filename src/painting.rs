@@ -1,6 +1,7 @@
 use super::{HEIGHT, WIDTH};
 
 use crate::constants::{BLACK, ROBOTO};
+use crate::css::Unit::Px;
 use crate::css::{self, Value};
 use crate::{html, layout, style};
 
@@ -106,13 +107,20 @@ fn redner_text(list: &mut DisplayList, layout_box: &LayoutBox) {
     };
 
     let color = color.unwrap_or(BLACK);
+    let font_size = match layout_box.box_type {
+        BoxType::TextNode(style, _) => style
+            .value("font-size")
+            .unwrap_or(Value::Length(16.0, Px))
+            .to_px(),
+        _ => return,
+    };
 
     list.push(DisplayCommand::Text(
         text.clone(),
         layout_box.dimension.border_box(),
         color,
         // TODO: font size should be changed here
-        16.0,
+        font_size,
     ));
 }
 
