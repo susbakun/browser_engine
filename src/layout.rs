@@ -49,7 +49,7 @@ pub fn layout_tree<'a>(
     containing_block.content.height = 0.0;
 
     let mut root = build_layout_tree(style_node);
-    root.layout(containing_block, Some(font));
+    root.layout(containing_block, font);
 
     root
 }
@@ -118,18 +118,18 @@ impl<'a> LayoutBox<'a> {
         }
     }
 
-    fn layout(&mut self, containing_block: Dimensions, font: Option<&fontdue::Font>) {
+    fn layout(&mut self, containing_block: Dimensions, font: &fontdue::Font) {
         match self.box_type {
-            BoxType::BlockNode(_) => self.layout_block(containing_block),
+            BoxType::BlockNode(_) => self.layout_block(containing_block, font),
             BoxType::TextNode(_, ..) => self.layout_text(containing_block, font),
             BoxType::InlineNode(_) | BoxType::AnonymousBlock => {} //TODO:,
         }
     }
 
-    fn layout_block(&mut self, containing_block: Dimensions) {
+    fn layout_block(&mut self, containing_block: Dimensions, font: &fontdue::Font) {
         self.calculate_block_width(containing_block);
         self.calculate_block_position(containing_block);
-        self.layout_block_children();
+        self.layout_block_children(font);
         self.calculate_block_height();
     }
 
@@ -252,9 +252,9 @@ impl<'a> LayoutBox<'a> {
             + d.margin.top;
     }
 
-    fn layout_block_children(&mut self) {
+    fn layout_block_children(&mut self, font: &fontdue::Font) {
         for child in &mut self.children {
-            child.layout(self.dimension, None);
+            child.layout(self.dimension, font);
             self.dimension.content.height += child.dimension.margin_box().height;
         }
     }
@@ -265,12 +265,10 @@ impl<'a> LayoutBox<'a> {
         }
     }
 
-    fn layout_text(&mut self, containing_block: Dimensions, font: Option<&fontdue::Font>) {
-        if let Some(font) = font {
+    fn layout_text(&mut self, containing_block: Dimensions, font: &fontdue::Font) {
             self.calculate_text_span(font);
             // same as block version
             self.calculate_block_position(containing_block);
-        }
     }
 
     fn calculate_text_span(&mut self, font: &fontdue::Font) {

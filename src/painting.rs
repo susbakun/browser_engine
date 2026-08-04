@@ -100,11 +100,12 @@ fn render_borders(list: &mut DisplayList, layout_box: &LayoutBox) {
 fn redner_text(list: &mut DisplayList, layout_box: &LayoutBox) {
     let color = get_color("color", layout_box);
 
+    
     let text = match layout_box.box_type {
         BoxType::TextNode(_, text) => text,
         _ => return,
     };
-
+    
     let color = color.unwrap_or(BLACK);
 
     list.push(DisplayCommand::Text(
@@ -178,8 +179,8 @@ impl Canvas {
                                 continue;
                             }
 
-                            let px = pen_x as usize + x;
-                            let py = rect.y as usize + y;
+                            let px = pen_x as usize + metrics.xmin as usize + x;
+                            let py = (rect.y + metrics.ymin as f32) as usize + y;
                             let bg = self.pixels[px + py * self.width];
                             let blended = color.get_blended_color(bg);
                             self.pixels[px + py * self.width] = blended;

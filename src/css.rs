@@ -36,7 +36,7 @@ pub enum Unit {
     Px,
 }
 
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, PartialEq, Debug)]
 pub struct Color {
     pub r: u8,
     pub g: u8,

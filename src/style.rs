@@ -116,6 +116,7 @@ fn specified_values(element: &ElementData, stylesheet: &Stylesheet) -> PropertyM
     values
 }
 
+
 fn text_node_values() -> PropertyMap {
     let mut values = HashMap::new();
 
@@ -128,6 +129,7 @@ fn text_node_values() -> PropertyMap {
 
     values
 }
+
 
 pub fn style_tree<'a>(root: &'a Node, stylesheet: &'a Stylesheet) -> StyleNode<'a> {
     StyleNode {
