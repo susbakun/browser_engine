@@ -64,6 +64,25 @@ impl Color {
         }
     }
 
+    pub fn get_blended_color_with_coverage(&self, background_color: Color, coverage: u8) -> Self {
+        let alpha = self.get_normalized_alpha() * (coverage as f32 / 255.0);
+
+        let result_r = (self.r as f32 * alpha) + (background_color.r as f32 * (1.0 - alpha));
+        let result_g = (self.g as f32 * alpha) + (background_color.g as f32 * (1.0 - alpha));
+        let result_b = (self.b as f32 * alpha) + (background_color.b as f32 * (1.0 - alpha));
+
+        let result_r = result_r.clamp(0.0, 255.0) as u8;
+        let result_g = result_g.clamp(0.0, 255.0) as u8;
+        let result_b = result_b.clamp(0.0, 255.0) as u8;
+
+        Self {
+            r: result_r,
+            g: result_g,
+            b: result_b,
+            a: 255,
+        }
+    }
+
     pub fn get_normalized_alpha(&self) -> f32 {
         self.a as f32 / 255.0
     }

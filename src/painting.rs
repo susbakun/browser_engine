@@ -100,12 +100,11 @@ fn render_borders(list: &mut DisplayList, layout_box: &LayoutBox) {
 fn redner_text(list: &mut DisplayList, layout_box: &LayoutBox) {
     let color = get_color("color", layout_box);
 
-    
     let text = match layout_box.box_type {
         BoxType::TextNode(_, text) => text,
         _ => return,
     };
-    
+
     let color = color.unwrap_or(BLACK);
 
     list.push(DisplayCommand::Text(
@@ -169,9 +168,15 @@ impl Canvas {
                 }
             }
             &DisplayCommand::Text(text, rect, color, size) => {
+                let line_metrics = font.horizontal_line_metrics(*size).unwrap();
+                let baseline_y = rect.y + line_metrics.ascent;
+
                 let mut pen_x = rect.x;
                 for ch in text.chars() {
                     let (metrics, bitmap) = font.rasterize(ch, *size);
+
+                    let glyph_top = baseline_y - metrics.ymin as f32 - metrics.height as f32;
+
                     for y in 0..metrics.height {
                         for x in 0..metrics.width {
                             let coverage = bitmap[y * metrics.width + x];
@@ -180,9 +185,9 @@ impl Canvas {
                             }
 
                             let px = pen_x as usize + metrics.xmin as usize + x;
-                            let py = (rect.y + metrics.ymin as f32) as usize + y;
+                            let py = glyph_top as usize + y;
                             let bg = self.pixels[px + py * self.width];
-                            let blended = color.get_blended_color(bg);
+                            let blended = color.get_blended_color_with_coverage(bg, coverage);
                             self.pixels[px + py * self.width] = blended;
                         }
                     }
