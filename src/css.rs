@@ -19,19 +19,26 @@ pub struct SimpleSelector {
     pub class: Vec<String>,
 }
 
+#[derive(Debug)]
 pub struct Declartion {
     pub name: String,
     pub value: Value,
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Debug)]
 pub enum Value {
     Keyword(String),
     Length(f32, Unit),
     ColorValue(Color),
 }
 
-#[derive(Clone, PartialEq)]
+impl From<Color> for Value {
+    fn from(color: Color) -> Self {
+        Value::ColorValue(color)
+    }
+}
+
+#[derive(Clone, PartialEq, Debug)]
 pub enum Unit {
     Px,
 }
@@ -234,7 +241,7 @@ impl Parser {
 
     fn parse_value(&mut self) -> Value {
         match self.next_char() {
-            '0'..'9' => self.parse_length(),
+            '0'..='9' => self.parse_length(),
             '#' | 'r' => self.parse_color(),
             _ => Value::Keyword(self.parse_identifier()),
         }

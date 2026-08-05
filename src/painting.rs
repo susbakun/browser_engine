@@ -215,8 +215,9 @@ pub fn get_canvas(html: String, css: String) -> Canvas {
 
     let root_node = html::parse(html);
     let stylesheet = css::parse(css);
-    let style_root = style::style_tree(&root_node, &stylesheet);
-    let layout_root = layout::layout_tree(&style_root, viewport, &font);
+    let mut style_root = style::style_tree(&root_node, &stylesheet);
+
+    let layout_root = layout::layout_tree(&mut style_root, viewport, &font);
 
     paint(&layout_root, viewport.content, &font)
 }

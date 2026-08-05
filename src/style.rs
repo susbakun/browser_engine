@@ -1,3 +1,5 @@
+use crate::constants::WHITE;
+
 use super::css::Value;
 use super::css::{Parser as CssParser, Rule, Selector, SimpleSelector, Specificity, Stylesheet};
 use super::dom::{ElementData, Node, NodeType};
@@ -5,6 +7,7 @@ use std::collections::HashMap;
 
 type PropertyMap = HashMap<String, Value>;
 
+#[derive(Clone)]
 pub struct StyleNode<'a> {
     pub node: &'a Node,
     specified_values: PropertyMap,
@@ -35,6 +38,30 @@ impl<'a> StyleNode<'a> {
                 _ => Display::Inline,
             },
             _ => Display::Inline,
+        }
+    }
+
+    pub fn apply_inherit_styles(&mut self) {
+        let self_clone = self.clone();
+        let inherit_keyword = String::from("inherit");
+
+        for child in self.children.iter_mut() {
+            for (key, value) in child.specified_values.iter_mut() {
+                match value {
+                    Value::Keyword(kw) if *kw == inherit_keyword => match key.as_str() {
+                        "display" => *value = Value::Keyword("block".to_string()),
+                        "color" => *value = self_clone.value("color").unwrap_or(WHITE.into()),
+                        "background-color" => {
+                            *value =
+                                self_clone.lookup("background_color", "background", &WHITE.into())
+                        }
+                        _ => continue,
+                    },
+                    _ => continue,
+                };
+            }
+
+            child.apply_inherit_styles();
         }
     }
 }
@@ -116,11 +143,10 @@ fn specified_values(element: &ElementData, stylesheet: &Stylesheet) -> PropertyM
     values
 }
 
-
 fn text_node_values() -> PropertyMap {
     let mut values = HashMap::new();
 
-    let styles = "display: block;";
+    let styles = "display: inherit; color: inherit;";
     let declrations = CssParser::parse_inline_style(styles.to_string());
 
     declrations.iter().for_each(|dec| {
@@ -130,9 +156,8 @@ fn text_node_values() -> PropertyMap {
     values
 }
 
-
 pub fn style_tree<'a>(root: &'a Node, stylesheet: &'a Stylesheet) -> StyleNode<'a> {
-    StyleNode {
+    let mut sn = StyleNode {
         node: root,
         specified_values: match &root.node_type {
             NodeType::Element(element) => specified_values(&element, stylesheet),
@@ -143,5 +168,9 @@ pub fn style_tree<'a>(root: &'a Node, stylesheet: &'a Stylesheet) -> StyleNode<'
             .iter()
             .map(|child| style_tree(child, stylesheet))
             .collect(),
-    }
+    };
+
+    sn.apply_inherit_styles();
+
+    sn
 }
