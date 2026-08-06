@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::dom;
+use crate::{constants::SELF_CLOSING_TAGS, dom};
 
 struct Parser {
     pos: usize,
@@ -49,7 +49,7 @@ impl Parser {
     }
 
     fn parse_name(&mut self) -> String {
-        self.consume_while(|c| matches!(c, 'a'..'z' | 'A'..'Z' | '0'..'9'))
+        self.consume_while(|c| matches!(c, 'a'..='z' | 'A'..='Z' | '0'..='9'))
     }
 
     fn parse_attr(&mut self) -> (String, String) {
@@ -69,11 +69,11 @@ impl Parser {
         value
     }
 
-    fn parse_attributes(&mut self) -> dom::AttrType {
+    fn parse_attributes(&mut self, closing_char: char) -> dom::AttrType {
         let mut attributes = HashMap::new();
         loop {
             self.consume_whitespace();
-            if self.next_char() == '>' {
+            if self.next_char() == closing_char {
                 break;
             }
             let (name, value) = self.parse_attr();
@@ -88,15 +88,25 @@ impl Parser {
 
     fn parse_element(&mut self) -> dom::Node {
         self.expect("<");
+
         let tag_name = self.parse_name();
-        let attrs = self.parse_attributes();
-        self.expect(">");
+        let attrs;
+        let children;
 
-        let children = self.parse_nodes();
-
-        self.expect("</");
-        self.expect(&tag_name);
-        self.expect(">");
+        // handling self-closing tags seperately
+        if SELF_CLOSING_TAGS.contains(&tag_name.as_str()) {
+            attrs = self.parse_attributes('/');
+            self.expect("/");
+            self.expect(">");
+            children = vec![];
+        } else {
+            attrs = self.parse_attributes('>');
+            self.expect(">");
+            children = self.parse_nodes();
+            self.expect("</");
+            self.expect(&tag_name);
+            self.expect(">");
+        }
 
         dom::element(tag_name, attrs, children)
     }

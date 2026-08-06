@@ -16,3 +16,5 @@ pub const WHITE: Color = Color {
     b: 255,
     a: 255,
 };
+
+pub const SELF_CLOSING_TAGS: [&'static str; 3] = ["img", "br", "input"];
