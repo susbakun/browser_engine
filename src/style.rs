@@ -166,7 +166,7 @@ fn text_node_values() -> PropertyMap {
 }
 
 pub fn style_tree<'a>(root: &'a Node, stylesheet: &'a Stylesheet) -> StyleNode<'a> {
-    let mut sn = StyleNode {
+    StyleNode {
         node: root,
         specified_values: match &root.node_type {
             NodeType::Element(element) => specified_values(&element, stylesheet),
@@ -177,9 +177,5 @@ pub fn style_tree<'a>(root: &'a Node, stylesheet: &'a Stylesheet) -> StyleNode<'
             .iter()
             .map(|child| style_tree(child, stylesheet))
             .collect(),
-    };
-
-    sn.apply_inherit_styles();
-
-    sn
+    }
 }

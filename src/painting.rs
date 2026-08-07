@@ -266,6 +266,8 @@ pub fn get_canvas(html: String, css: String) -> Canvas {
     let root_node = html::parse(html);
     let stylesheet = css::parse(css);
     let mut style_root = style::style_tree(&root_node, &stylesheet);
+    // start from root and apply the inherit styles for the children
+    style_root.apply_inherit_styles();
 
     let layout_root = layout::layout_tree(&mut style_root, viewport, &font);
 
