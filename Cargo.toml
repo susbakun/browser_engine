@@ -11,3 +11,4 @@ image = "0.25.10"
 pixels = "0.17.1"
 winit = "0.30.13"
 winit_input_helper = "0.17.0"
+reqwest = { version = "0.12", features = ["blocking"] }

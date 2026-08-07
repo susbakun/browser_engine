@@ -237,13 +237,6 @@ impl Canvas {
                 let x1 = (rect.x + rect.width).clamp(0.0, self.width as f32) as usize;
                 let y1 = (rect.y + rect.height).clamp(0.0, self.height as f32) as usize;
 
-                println!("rect: {} x {}", rect.width, rect.height);
-                println!("pixels: {}", colors.len() / 4);
-                println!(
-                    "expected pixels: {}",
-                    rect.width as usize * rect.height as usize
-                );
-
                 for y in y0..y1 {
                     for x in x0..x1 {
                         let background_color = self.pixels[x + y * self.width];
