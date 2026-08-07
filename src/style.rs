@@ -1,4 +1,5 @@
-use crate::constants::WHITE;
+use crate::constants::{DEFAULT_FONT_SIZE, WHITE};
+use crate::css::Unit::Px;
 
 use super::css::Value;
 use super::css::{Parser as CssParser, Rule, Selector, SimpleSelector, Specificity, Stylesheet};
@@ -50,6 +51,11 @@ impl<'a> StyleNode<'a> {
                 match value {
                     Value::Keyword(kw) if *kw == inherit_keyword => match key.as_str() {
                         "display" => *value = Value::Keyword("block".to_string()),
+                        "font-size" => {
+                            *value = self_clone
+                                .value("font-size")
+                                .unwrap_or(Value::Length(DEFAULT_FONT_SIZE, Px))
+                        }
                         "color" => *value = self_clone.value("color").unwrap_or(WHITE.into()),
                         "background-color" => {
                             *value =
@@ -146,7 +152,7 @@ fn specified_values(element: &ElementData, stylesheet: &Stylesheet) -> PropertyM
 fn text_node_values() -> PropertyMap {
     let mut values = HashMap::new();
 
-    let styles = "display: inherit; color: inherit;";
+    let styles = "display: inherit; color: inherit; font-size: inherit;";
     let declrations = CssParser::parse_inline_style(styles.to_string());
 
     declrations.iter().for_each(|dec| {

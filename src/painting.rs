@@ -122,7 +122,6 @@ fn redner_text(list: &mut DisplayList, layout_box: &LayoutBox) {
         text.clone(),
         layout_box.dimension.border_box(),
         color,
-        // TODO: font size should be changed here
         font_size,
     ));
 }

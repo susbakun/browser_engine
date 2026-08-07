@@ -2,6 +2,7 @@ use crate::css::Color;
 
 // fonts
 pub const ROBOTO: &[u8] = include_bytes!("../resources/fonts/Roboto-Regular.ttf") as &[u8];
+pub const DEFAULT_FONT_SIZE: f32 = 16.0;
 
 // colors
 pub const BLACK: Color = Color {

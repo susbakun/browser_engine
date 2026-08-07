@@ -1,3 +1,4 @@
+use crate::constants::DEFAULT_FONT_SIZE;
 use crate::css::Unit::Px;
 use crate::dom::NodeType::{self, Element};
 use crate::layout::BoxType::BlockNode;
@@ -312,7 +313,7 @@ impl<'a> LayoutBox<'a> {
 
         let font_size = match style.value("font-size") {
             Some(Value::Length(s, Unit::Px)) => s,
-            _ => 16.0,
+            _ => DEFAULT_FONT_SIZE,
         };
 
         let zero = Value::Length(0.0, Unit::Px);
