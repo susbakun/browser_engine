@@ -145,6 +145,11 @@ fn render_image(list: &mut DisplayList, layout_box: &LayoutBox) {
     let img_height = layout_box.dimension.border_box().height;
 
     let colors = load_image(src, img_width, img_height);
+    // Don't want to add any image command
+    // for the case when we don't have any image
+    if colors.len() == 0 {
+        return;
+    }
 
     list.push(DisplayCommand::Image(
         layout_box.dimension.border_box(),

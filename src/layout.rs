@@ -120,6 +120,30 @@ impl<'a> LayoutBox<'a> {
         }
     }
 
+    fn get_width_attribute(&self) -> Option<f32> {
+        let BlockNode(style_node) = self.box_type else {
+            return None;
+        };
+
+        let Element(element) = &style_node.node.node_type else {
+            return None;
+        };
+
+        element.get_attr("width")?.parse().ok()
+    }
+
+    fn get_height_attribute(&self) -> Option<f32> {
+        let BlockNode(style_node) = self.box_type else {
+            return None;
+        };
+
+        let Element(element) = &style_node.node.node_type else {
+            return None;
+        };
+
+        element.get_attr("height")?.parse().ok()
+    }
+
     fn layout(&mut self, containing_block: Dimensions, font: &fontdue::Font) {
         match self.box_type {
             BoxType::BlockNode(_) => self.layout_block(containing_block, font),
@@ -142,19 +166,9 @@ impl<'a> LayoutBox<'a> {
         let mut width = style.value("width").unwrap_or_else(|| {
             // handling the case where the width attribute is set
             // usually for img tags
-            let width_attr = match self.box_type {
-                BlockNode(style_node) => match &style_node.node.node_type {
-                    Element(element) => element.get_attr("width"),
-                    _ => None,
-                },
-                _ => None,
-            };
-            if let Some(width) = width_attr {
-                let w = width.parse::<usize>().unwrap();
-                Value::Length(w as f32, Px)
-            } else {
-                auto.clone()
-            }
+            self.get_width_attribute()
+                .map(|width| Value::Length(width, Px))
+                .unwrap_or(auto.clone())
         });
 
         let zero = Value::Length(0.0, Unit::Px);
@@ -283,16 +297,8 @@ impl<'a> LayoutBox<'a> {
         } else {
             // handling the case where the height attribute is set
             // usually for img tags
-            let height_attr = match self.box_type {
-                BlockNode(style_node) => match &style_node.node.node_type {
-                    Element(element) => element.get_attr("height"),
-                    _ => None,
-                },
-                _ => None,
-            };
-            if let Some(height) = height_attr {
-                let h = height.parse::<usize>().unwrap();
-                self.dimension.content.height = h as f32;
+            if let Some(h) = self.get_height_attribute() {
+                self.dimension.content.height = h;
             }
         }
     }
