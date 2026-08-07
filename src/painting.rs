@@ -1,6 +1,4 @@
-use super::{HEIGHT, WIDTH};
-
-use crate::constants::{BLACK, ROBOTO};
+use crate::constants::{BLACK, HEIGHT, ROBOTO, WIDTH};
 use crate::css::Unit::Px;
 use crate::css::{self, Value};
 use crate::dom::NodeType::Element;

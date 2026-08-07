@@ -19,7 +19,9 @@ This browser engine implements a simplified rendering pipeline that transforms H
 
 ### Currently Implemented
 
-- ✅ HTML parsing into DOM tree
+### Currently Implemented
+
+- ✅ HTML parsing into a DOM tree
 - ✅ CSS parsing (selectors, declarations, values)
 - ✅ Style tree construction with rule matching
 - ✅ Block-level layout algorithm
@@ -28,12 +30,14 @@ This browser engine implements a simplified rendering pipeline that transforms H
 - ✅ Border rendering
 - ✅ Padding support
 - ✅ Nested block elements
-- ✅ Live window display (800×600)
+- ✅ Image rendering (`<img>`), including local files and remote HTTP/HTTPS images
+- ✅ Text rendering
 - ✅ Alpha channel support and transparency blending
 - ✅ Hex color parsing with alpha channel (`#rrggbbaa` format)
 - ✅ RGB function support with optional alpha channel (`rgb(r, g, b)` and `rgb(r, g, b / alpha)`)
-- ✅ Inline CSS styles via HTML `style` attribute
+- ✅ Inline CSS styles via the HTML `style` attribute
 - ✅ `display: none` support (e.g. hide `<head>`)
+- ✅ Live window display (800×600)
 
 ## Architecture
 
@@ -47,6 +51,7 @@ The project is organized into several modules:
 - **`painting.rs`** — Display list generation and rasterization
 - **`window.rs`** — Live window creation and pixel buffer display
 - **`cli.rs`** — Command-line argument parsing
+- **`image.rs`** — Image loading, decoding, resizing, and rendering
 
 ## Usage
 
@@ -183,27 +188,26 @@ Inline styles have higher specificity than stylesheet rules and will override ma
 - **`pixels`** — Pixel buffer rendering
 - **`winit`** — Cross-platform window creation
 - **`winit_input_helper`** — Keyboard and window input handling
+- **`image`** — Image decoding and resizing
+- **`reqwest`** — Downloading remote images over HTTP/HTTPS
+- **`fontdue`** — Text rasterization
 
 ## TODO / Planned Features
 
 The following features are planned for future implementation:
 
-1. **`<img>` tag rendering** — Load and display images (see `report.md` for the full implementation plan)
-2. **Cascading** — Proper CSS cascade order and specificity resolution
-3. **Initial and/or computed values** — Default values for CSS properties
-4. **Inheritance** — CSS property inheritance from parent to child elements
-5. **Collapsing vertical margins** — CSS margin collapsing behavior
-6. **Text rendering** — Rendering text on screen
-7. **Inline layout** — Layout for inline elements
+1. **Cascading** — Proper CSS cascade order and specificity resolution
+2. **Initial and/or computed values** — Default values for CSS properties
+3. **Collapsing vertical margins** — CSS margin collapsing behavior
+4. **Inline layout** — Layout for inline elements
 
 ## Limitations
 
 - Only supports block-level layout (inline layout is not yet implemented)
-- No `<img>` or other replaced element support yet
-- No support for many CSS properties
-- No z-index support
+- Text rendering currently supports **Roboto** only
+- Limited CSS property support
 - Simplified CSS selector matching
-- No support for CSS inheritance or cascading
+- No z-index or stacking contexts
 - Fixed viewport size (800×600)
 
 ## References

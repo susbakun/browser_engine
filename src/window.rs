@@ -1,6 +1,7 @@
-use super::{HEIGHT, WIDTH};
-
-use crate::painting::Canvas;
+use crate::{
+    constants::{HEIGHT, WIDTH},
+    painting::Canvas,
+};
 use anyhow::Result;
 use std::sync::Arc;
 

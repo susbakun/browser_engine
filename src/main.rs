@@ -15,9 +15,6 @@ mod painting;
 mod style;
 mod window;
 
-pub const WIDTH: u32 = 800;
-pub const HEIGHT: u32 = 600;
-
 fn main() -> Result<()> {
     let (html, css) = cli::parse_args();
 
