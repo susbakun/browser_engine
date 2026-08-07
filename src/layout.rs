@@ -1,4 +1,5 @@
-use crate::dom::NodeType;
+use crate::css::Unit::Px;
+use crate::dom::NodeType::{self, Element};
 use crate::layout::BoxType::BlockNode;
 
 use super::css::{Unit, Value};
@@ -137,7 +138,23 @@ impl<'a> LayoutBox<'a> {
         let style = self.get_style_node();
 
         let auto = Value::Keyword("auto".to_string());
-        let mut width = style.value("width").unwrap_or(auto.clone());
+        let mut width = style.value("width").unwrap_or_else(|| {
+            // handling the case where the width attribute is set
+            // usually for img tags
+            let width_attr = match self.box_type {
+                BlockNode(style_node) => match &style_node.node.node_type {
+                    Element(element) => element.get_attr("width"),
+                    _ => None,
+                },
+                _ => None,
+            };
+            if let Some(width) = width_attr {
+                let w = width.parse::<usize>().unwrap();
+                Value::Length(w as f32, Px)
+            } else {
+                auto.clone()
+            }
+        });
 
         let zero = Value::Length(0.0, Unit::Px);
 
@@ -262,6 +279,20 @@ impl<'a> LayoutBox<'a> {
     fn calculate_block_height(&mut self) {
         if let Some(Value::Length(h, Unit::Px)) = self.get_style_node().value("height") {
             self.dimension.content.height = h;
+        } else {
+            // handling the case where the height attribute is set
+            // usually for img tags
+            let height_attr = match self.box_type {
+                BlockNode(style_node) => match &style_node.node.node_type {
+                    Element(element) => element.get_attr("height"),
+                    _ => None,
+                },
+                _ => None,
+            };
+            if let Some(height) = height_attr {
+                let h = height.parse::<usize>().unwrap();
+                self.dimension.content.height = h as f32;
+            }
         }
     }
 

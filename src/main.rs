@@ -9,6 +9,7 @@ mod constants;
 mod css;
 mod dom;
 mod html;
+mod image;
 mod layout;
 mod painting;
 mod style;

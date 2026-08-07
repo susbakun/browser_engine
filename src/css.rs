@@ -52,6 +52,10 @@ pub struct Color {
 }
 
 impl Color {
+    pub fn new(r: u8, g: u8, b: u8, a: u8) -> Self {
+        Color { r, g, b, a }
+    }
+
     pub fn get_blended_color(&self, background_color: Color) -> Self {
         let alpha = self.get_normalized_alpha();
 

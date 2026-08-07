@@ -3,6 +3,8 @@ use super::{HEIGHT, WIDTH};
 use crate::constants::{BLACK, ROBOTO};
 use crate::css::Unit::Px;
 use crate::css::{self, Value};
+use crate::dom::NodeType::Element;
+use crate::image::{get_components, load_image};
 use crate::{html, layout, style};
 
 use super::css::Color;
@@ -13,6 +15,7 @@ type DisplayList = Vec<DisplayCommand>;
 enum DisplayCommand {
     SolidColor(Color, Rect),
     Text(String, Rect, Color, f32),
+    Image(Rect, Vec<u8>),
 }
 
 fn build_display_list(layout_root: &LayoutBox) -> DisplayList {
@@ -24,8 +27,8 @@ fn build_display_list(layout_root: &LayoutBox) -> DisplayList {
 fn render_layout_box(list: &mut DisplayList, layout_box: &LayoutBox) {
     render_background(list, layout_box);
     render_borders(list, layout_box);
-
     redner_text(list, layout_box);
+    render_image(list, layout_box);
 
     for child in layout_box.children.iter() {
         render_layout_box(list, &child);
@@ -124,6 +127,32 @@ fn redner_text(list: &mut DisplayList, layout_box: &LayoutBox) {
     ));
 }
 
+fn render_image(list: &mut DisplayList, layout_box: &LayoutBox) {
+    let element = match layout_box.box_type {
+        BoxType::BlockNode(style) => match &style.node.node_type {
+            Element(element) => element,
+            _ => return,
+        },
+        _ => return,
+    };
+
+    let src = match element.get_attr("src") {
+        Some(src) => src,
+        None => return,
+    };
+
+    // getting the properties needed for image rendering
+    let img_width = layout_box.dimension.border_box().width;
+    let img_height = layout_box.dimension.border_box().height;
+
+    let colors = load_image(src, img_width, img_height);
+
+    list.push(DisplayCommand::Image(
+        layout_box.dimension.border_box(),
+        colors,
+    ));
+}
+
 fn get_color(name: &str, layout_box: &LayoutBox) -> Option<Color> {
     match layout_box.box_type {
         BoxType::BlockNode(style) | BoxType::InlineNode(style) | BoxType::TextNode(style, _) => {
@@ -200,6 +229,32 @@ impl Canvas {
                         }
                     }
                     pen_x += metrics.advance_width;
+                }
+            }
+            &DisplayCommand::Image(rect, colors) => {
+                let x0 = rect.x.clamp(0.0, self.width as f32) as usize;
+                let y0 = rect.y.clamp(0.0, self.height as f32) as usize;
+                let x1 = (rect.x + rect.width).clamp(0.0, self.width as f32) as usize;
+                let y1 = (rect.y + rect.height).clamp(0.0, self.height as f32) as usize;
+
+                println!("rect: {} x {}", rect.width, rect.height);
+                println!("pixels: {}", colors.len() / 4);
+                println!(
+                    "expected pixels: {}",
+                    rect.width as usize * rect.height as usize
+                );
+
+                for y in y0..y1 {
+                    for x in x0..x1 {
+                        let background_color = self.pixels[x + y * self.width];
+
+                        let pixel = (x - x0) + (y - y0) * rect.width as usize;
+                        let color = get_components(colors, pixel);
+
+                        let result = color.get_blended_color(background_color);
+
+                        self.pixels[x + y * self.width] = result;
+                    }
                 }
             }
         }

@@ -35,12 +35,16 @@ pub fn element(tag_name: String, attrs: AttrType, children: Vec<Node>) -> Node {
 }
 
 impl ElementData {
+    pub fn get_attr(&self, attribute: &str) -> Option<&String> {
+        self.attrs.get(attribute)
+    }
+
     pub fn id(&self) -> Option<&String> {
-        self.attrs.get("id")
+        self.get_attr("id")
     }
 
     pub fn classes(&self) -> HashSet<&str> {
-        match self.attrs.get("class") {
+        match self.get_attr("class") {
             Some(classlist) => classlist.split(" ").collect(),
             None => HashSet::new(),
         }

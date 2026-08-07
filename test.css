@@ -28,3 +28,7 @@ div.g {
 p {
   color: #ffffff;
 }
+
+img {
+  display: block;
+}

@@ -1,7 +1,7 @@
 use crate::css::Color;
 
 // fonts
-pub const ROBOTO: &[u8] = include_bytes!("../resources/Roboto-Regular.ttf") as &[u8];
+pub const ROBOTO: &[u8] = include_bytes!("../resources/fonts/Roboto-Regular.ttf") as &[u8];
 
 // colors
 pub const BLACK: Color = Color {
