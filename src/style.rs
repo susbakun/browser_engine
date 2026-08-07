@@ -48,8 +48,12 @@ impl<'a> StyleNode<'a> {
 
         for child in self.children.iter_mut() {
             for (key, value) in child.specified_values.iter_mut() {
-                match value {
-                    Value::Keyword(kw) if *kw == inherit_keyword => match key.as_str() {
+                let Value::Keyword(kw) = value else {
+                    continue;
+                };
+
+                if *kw == inherit_keyword {
+                    match key.as_str() {
                         "display" => *value = Value::Keyword("block".to_string()),
                         "font-size" => {
                             *value = self_clone
@@ -62,9 +66,8 @@ impl<'a> StyleNode<'a> {
                                 self_clone.lookup("background_color", "background", &WHITE.into())
                         }
                         _ => continue,
-                    },
-                    _ => continue,
-                };
+                    }
+                }
             }
 
             child.apply_inherit_styles();
