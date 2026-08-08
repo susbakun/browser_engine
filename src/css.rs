@@ -1,18 +1,23 @@
 use std::ops::Add;
 
+use crate::constants::UA_STYLESHEET;
+
 pub struct Stylesheet {
     pub rules: Vec<Rule>,
 }
 
+#[derive(Debug)]
 pub struct Rule {
     pub selectors: Vec<Selector>,
     pub declarations: Vec<Declartion>,
 }
 
+#[derive(Debug)]
 pub enum Selector {
     Simple(SimpleSelector),
 }
 
+#[derive(Debug)]
 pub struct SimpleSelector {
     pub tag_name: Option<String>,
     pub id: Option<String>,
@@ -135,13 +140,27 @@ impl Value {
 }
 
 pub fn parse(source: String) -> Stylesheet {
+    // get default rules first
+    // then add the remaining
+    let mut rules = parse_default_rules();
+
     let mut parser = Parser {
         input: source,
         pos: 0,
     };
-    Stylesheet {
-        rules: parser.parse_rules(),
-    }
+
+    rules.extend(parser.parse_rules());
+
+    Stylesheet { rules }
+}
+
+pub fn parse_default_rules() -> Vec<Rule> {
+    let mut parser = Parser {
+        input: UA_STYLESHEET.to_owned(),
+        pos: 0,
+    };
+
+    parser.parse_rules()
 }
 
 pub struct Parser {
@@ -256,7 +275,7 @@ impl Parser {
     }
 
     fn parse_float(&mut self) -> f32 {
-        self.consume_while(|c| matches!(c, '0'..'9' | '.'))
+        self.consume_while(|c| matches!(c, '0'..='9' | '.'))
             .parse()
             .unwrap()
     }
@@ -265,7 +284,10 @@ impl Parser {
         self.consume_whitespace();
         match self.parse_identifier().to_ascii_lowercase().as_str() {
             "px" => Unit::Px,
-            _ => panic!("unrecognized unit"),
+            _ => {
+                println!("{}", &self.input[self.pos..]);
+                panic!("unrecognized unit")
+            }
         }
     }
 
@@ -409,7 +431,7 @@ impl Parser {
 }
 
 fn valid_numeric_char(c: char) -> bool {
-    matches!(c, '0'..'9')
+    matches!(c, '0'..='9')
 }
 
 fn valid_identifier_char(c: char) -> bool {

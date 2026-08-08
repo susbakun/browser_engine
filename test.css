@@ -1,8 +1,4 @@
-head {
-  display: none;
-}
 * {
-  display: block;
   padding: 12px;
 }
 
@@ -27,7 +23,6 @@ div.g {
 
 p {
   color: #ffffff;
-  font-size: 36px;
 }
 
 img {

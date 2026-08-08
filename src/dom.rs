@@ -8,6 +8,15 @@ pub struct Node {
     pub node_type: NodeType,
 }
 
+impl Node {
+    fn get_tag_name(&self) -> Option<&str> {
+        match &self.node_type {
+            NodeType::Element(ed) => Some(ed.tag_name.as_str()),
+            NodeType::Text(_) => None,
+        }
+    }
+}
+
 #[derive(Debug)]
 pub enum NodeType {
     Text(String),
