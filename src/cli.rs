@@ -1,5 +1,3 @@
-use std::fs;
-
 use getopts::Options;
 
 pub fn parse_args() -> (String, String) {
@@ -21,17 +19,13 @@ pub fn parse_args() -> (String, String) {
         matches.opt_str(flag).unwrap_or(default.to_string())
     };
 
-    let html = read_source(str_arg("h", "./test.html"));
-    let css = read_source(str_arg("c", "./test.css"));
+    let html_path = str_arg("h", "./test.html");
+    let css_path = str_arg("c", "./test.css");
 
-    (html, css)
+    (html_path, css_path)
 }
 
 fn print_help(opts: &Options) {
     let brief = "Usage: browser-engine [OPTIONS]";
     print!("{}", opts.usage(brief));
-}
-
-fn read_source(file_name: String) -> String {
-    fs::read_to_string(file_name).expect("Couldn't read the source")
 }

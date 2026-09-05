@@ -1,9 +1,10 @@
 use crate::{
     constants::{HEIGHT, WIDTH},
-    painting::Canvas,
+    painting::{Canvas, get_canvas},
+    watch::watch_files,
 };
 use anyhow::Result;
-use std::sync::Arc;
+use std::{fs, path::PathBuf, sync::Arc};
 
 use pixels::{Pixels, SurfaceTexture};
 use winit::{
@@ -15,8 +16,11 @@ use winit::{
 };
 use winit_input_helper::WinitInputHelper;
 
-pub fn create_window(canvas: &Canvas) -> Result<()> {
+pub fn create_window(html_path: PathBuf, css_path: PathBuf) -> Result<()> {
     let event_loop = EventLoop::new()?;
+
+    let mut canvas = rebuild_canvas(&html_path, &css_path);
+    let rx = watch_files(&[html_path.clone(), css_path.clone()]);
 
     let window = {
         let size = LogicalSize::new(WIDTH as f64, HEIGHT as f64);
@@ -30,17 +34,23 @@ pub fn create_window(canvas: &Canvas) -> Result<()> {
             )?,
         )
     };
+    let mut pixels = get_window_pixels(Arc::clone(&window))?;
     let mut input = WinitInputHelper::new();
 
-    let mut pixels = get_window_pixels(Arc::clone(&window))?;
-    let frame = pixels.frame_mut();
-
-    write_to_pixels(frame, canvas);
+    write_to_pixels(pixels.frame_mut(), &canvas);
 
     #[allow(deprecated)]
     let res = event_loop.run(|event, elwt| match event {
         Event::Resumed => {}
-        Event::NewEvents(_) => input.step(),
+        Event::NewEvents(_) => {
+            input.step();
+            if rx.try_recv().is_ok() {
+                while rx.try_recv().is_ok() {}
+                canvas = rebuild_canvas(&html_path, &css_path);
+                write_to_pixels(pixels.frame_mut(), &canvas);
+                window.request_redraw();
+            }
+        }
         Event::AboutToWait => input.end_step(),
         Event::WindowEvent { event, .. } => {
             if input.process_window_event(&event) {
@@ -64,6 +74,17 @@ pub fn create_window(canvas: &Canvas) -> Result<()> {
     })?;
 
     Ok(res)
+}
+
+fn rebuild_canvas(html_path: &PathBuf, css_path: &PathBuf) -> Canvas {
+    let html = read_source(html_path);
+    let css = read_source(css_path);
+
+    get_canvas(html, css)
+}
+
+fn read_source(file_name: &PathBuf) -> String {
+    fs::read_to_string(file_name).expect("Couldn't read the source")
 }
 
 fn get_window_pixels<'win>(window: Arc<Window>) -> Result<Pixels<'win>> {

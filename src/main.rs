@@ -2,8 +2,6 @@
 
 use anyhow::Result;
 
-use crate::painting::get_canvas;
-
 mod cli;
 mod constants;
 mod css;
@@ -13,12 +11,11 @@ mod image;
 mod layout;
 mod painting;
 mod style;
+mod watch;
 mod window;
 
 fn main() -> Result<()> {
-    let (html, css) = cli::parse_args();
+    let (html_path, css_path) = cli::parse_args();
 
-    let canvas = get_canvas(html, css);
-
-    window::create_window(&canvas)
+    window::create_window(html_path.into(), css_path.into())
 }
