@@ -19,12 +19,12 @@ This browser engine implements a simplified rendering pipeline that transforms H
 
 ### Currently Implemented
 
-### Currently Implemented
-
 - ✅ HTML parsing into a DOM tree
 - ✅ CSS parsing (selectors, declarations, values)
 - ✅ Style tree construction with rule matching
 - ✅ Block-level layout algorithm
+- ✅ Inline layout with line wrapping
+- ✅ Collapsing vertical margins between block elements
 - ✅ Basic painting/rasterization
 - ✅ Background color rendering
 - ✅ Border rendering
@@ -38,6 +38,7 @@ This browser engine implements a simplified rendering pipeline that transforms H
 - ✅ Inline CSS styles via the HTML `style` attribute
 - ✅ `display: none` support (e.g. hide `<head>`)
 - ✅ Live window display (800×600)
+- ✅ Automatic reload when the HTML or CSS file changes
 
 ## Architecture
 
@@ -50,6 +51,7 @@ The project is organized into several modules:
 - **`layout.rs`** — Block layout algorithm and box model calculations
 - **`painting.rs`** — Display list generation and rasterization
 - **`window.rs`** — Live window creation and pixel buffer display
+- **`watch.rs`** — Watches the input HTML and CSS files for changes
 - **`cli.rs`** — Command-line argument parsing
 - **`image.rs`** — Image loading, decoding, resizing, and rendering
 
@@ -68,7 +70,7 @@ cargo build
 
 ### Running
 
-The program accepts command-line arguments for HTML and CSS files and opens a window with the rendered result:
+The program accepts command-line arguments for HTML and CSS files and opens a window with the rendered result. Save either input file while the window is open to re-render it automatically:
 
 ```bash
 cargo run -- --html <html_file> --css <css_file>
@@ -191,6 +193,7 @@ Inline styles have higher specificity than stylesheet rules and will override ma
 - **`image`** — Image decoding and resizing
 - **`reqwest`** — Downloading remote images over HTTP/HTTPS
 - **`fontdue`** — Text rasterization
+- **`notify`** — Watching input files for changes
 
 ## TODO / Planned Features
 
@@ -198,12 +201,10 @@ The following features are planned for future implementation:
 
 1. **Cascading** — Proper CSS cascade order and specificity resolution
 2. **Initial and/or computed values** — Default values for CSS properties
-3. **Collapsing vertical margins** — CSS margin collapsing behavior
-4. **Inline layout** — Layout for inline elements
 
 ## Limitations
 
-- Only supports block-level layout (inline layout is not yet implemented)
+- Inline layout is simplified and supports basic text and inline elements
 - Text rendering currently supports **Roboto** only
 - Limited CSS property support
 - Simplified CSS selector matching
