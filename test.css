@@ -6,11 +6,12 @@ div.box {
   background: #f0f0f5;
 }
 
-b {
-  color: #cc0000;
+.child1 {
+  background-color: #00ffaa;
+  margin-bottom: 100px;
 }
 
-span {
-  background: #ffff00;
-  color: #000000;
+.child2 {
+    background-color: #aaff00;
+    margin-top: 10px;
 }

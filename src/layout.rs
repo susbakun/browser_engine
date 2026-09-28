@@ -289,10 +289,38 @@ impl<'a> LayoutBox<'a> {
     }
 
     fn layout_block_children(&mut self, font: &fontdue::Font) {
-        for child in &mut self.children {
-            child.layout(self.dimension, font);
-            self.dimension.content.height += child.dimension.margin_box().height;
+        let mut pending_margin = 0.0;
+        let mut content_bottom = 0.0;
+
+        let zero = Value::Length(0.0, Px);
+
+        for child in self.children.iter_mut() {
+            let child_margin_top = child
+                .get_style_node()
+                .map(|style| style.lookup("margin-top", "margin", &zero).to_px())
+                .unwrap_or(0.0);
+
+            let collapsing_margin = (pending_margin - child_margin_top).max(0.0);
+
+            let containing_block = Dimensions {
+                content: Rect {
+                    x: self.dimension.content.x,
+                    y: self.dimension.content.y,
+                    width: self.dimension.content.width,
+                    height: collapsing_margin + content_bottom,
+                },
+                ..Default::default()
+            };
+
+            child.layout(containing_block, font);
+
+            let border_box = child.dimension.border_box();
+
+            content_bottom = (border_box.y + border_box.height) - self.dimension.content.y;
+            pending_margin = child.dimension.margin.bottom;
         }
+
+        self.dimension.content.height = content_bottom + pending_margin;
     }
 
     fn calculate_block_height(&mut self) {
