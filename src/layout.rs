@@ -57,19 +57,21 @@ pub fn layout_tree<'a>(
 }
 
 fn build_layout_tree<'a>(style_node: &'a StyleNode<'a>) -> LayoutBox<'a> {
+    // handle text nodes at top because we don't need to explore
+    // it's children
+    if let NodeType::Text(text) = &style_node.node.node_type {
+        return LayoutBox {
+            dimension: Dimensions::default(),
+            box_type: BoxType::TextNode(style_node, &text),
+            children: vec![],
+        };
+    }
+
     let mut root = LayoutBox::new(match style_node.display() {
-        Display::Block => match &style_node.node.node_type {
-            NodeType::Text(text) => BoxType::TextNode(style_node, text),
-            _ => BlockNode(style_node),
-        },
+        Display::Block => BlockNode(style_node),
         Display::Inline => BoxType::InlineNode(style_node),
         Display::None => panic!("Root node has none display"),
     });
-
-    // Do not need to explore the children for text boxes
-    if matches!(root.box_type, BoxType::TextNode(..)) {
-        return root;
-    }
 
     for child in &style_node.children {
         match child.display() {
@@ -94,12 +96,12 @@ impl<'a> LayoutBox<'a> {
         }
     }
 
-    fn get_style_node(&self) -> &StyleNode<'_> {
+    fn get_style_node(&self) -> Option<&StyleNode<'_>> {
         match self.box_type {
             BoxType::BlockNode(node) | BoxType::InlineNode(node) | BoxType::TextNode(node, _) => {
-                node
+                Some(node)
             }
-            BoxType::AnonymousBlock => panic!("Anonymous block box has no style node"),
+            BoxType::AnonymousBlock => None,
         }
     }
 
@@ -148,7 +150,9 @@ impl<'a> LayoutBox<'a> {
         match self.box_type {
             BoxType::BlockNode(_) => self.layout_block(containing_block, font),
             BoxType::TextNode(_, ..) => self.layout_text(containing_block, font),
-            BoxType::InlineNode(_) | BoxType::AnonymousBlock => {} //TODO:,
+            BoxType::InlineNode(_) | BoxType::AnonymousBlock => {
+                self.layout_inline(containing_block, font)
+            }
         }
     }
 
@@ -160,7 +164,7 @@ impl<'a> LayoutBox<'a> {
     }
 
     fn calculate_block_width(&mut self, containing_block: Dimensions) {
-        let style = self.get_style_node();
+        let style = self.get_style_node().unwrap();
 
         let auto = Value::Keyword("auto".to_string());
         let mut width = style.value("width").unwrap_or_else(|| {
@@ -248,7 +252,7 @@ impl<'a> LayoutBox<'a> {
     }
 
     fn calculate_block_position(&mut self, containing_block: Dimensions) {
-        let style = self.get_style_node();
+        let style = self.get_style_node().unwrap();
 
         let zero = Value::Length(0.0, Unit::Px);
 
@@ -292,7 +296,7 @@ impl<'a> LayoutBox<'a> {
     }
 
     fn calculate_block_height(&mut self) {
-        if let Some(Value::Length(h, Unit::Px)) = self.get_style_node().value("height") {
+        if let Some(Value::Length(h, Unit::Px)) = self.get_style_node().unwrap().value("height") {
             self.dimension.content.height = h;
         } else {
             // handling the case where the height attribute is set
@@ -310,7 +314,7 @@ impl<'a> LayoutBox<'a> {
     }
 
     fn calculate_text_span(&mut self, font: &fontdue::Font) {
-        let style = self.get_style_node();
+        let style = self.get_style_node().unwrap();
 
         let text = match self.box_type {
             BoxType::TextNode(_, text) => text,
@@ -360,6 +364,118 @@ impl<'a> LayoutBox<'a> {
 
         d.content.width = width;
         d.content.height = height;
+    }
+
+    fn layout_inline(&mut self, containing_block: Dimensions, font: &fontdue::Font) {
+        let zero = Value::Length(0.0, Px);
+
+        let (margin, border, padding) = match self.get_style_node() {
+            Some(style) => (
+                EdgeSizes {
+                    left: style.lookup("margin-left", "margin", &zero).to_px(),
+                    right: style.lookup("margin-right", "margin", &zero).to_px(),
+                    top: style.lookup("margin-top", "margin", &zero).to_px(),
+                    bottom: style.lookup("margin-bottom", "margin", &zero).to_px(),
+                },
+                EdgeSizes {
+                    left: style.lookup("border-left", "border", &zero).to_px(),
+                    right: style.lookup("border-right", "border", &zero).to_px(),
+                    top: style.lookup("border-top", "border", &zero).to_px(),
+                    bottom: style.lookup("border-bottom", "border", &zero).to_px(),
+                },
+                EdgeSizes {
+                    left: style.lookup("padding-left", "padding", &zero).to_px(),
+                    right: style.lookup("padding-right", "padding", &zero).to_px(),
+                    top: style.lookup("padding-top", "padding", &zero).to_px(),
+                    bottom: style.lookup("padding-bottom", "padding", &zero).to_px(),
+                },
+            ),
+            None => (
+                EdgeSizes::default(),
+                EdgeSizes::default(),
+                EdgeSizes::default(),
+            ),
+        };
+
+        let d = &mut self.dimension;
+        d.margin = margin;
+        d.border = border;
+        d.padding = padding;
+        d.content.x = containing_block.content.x + margin.left + border.left + padding.left;
+        d.content.y = containing_block.content.y + margin.top + border.top + padding.top;
+        d.content.height = 0.0;
+
+        let is_line_box_root = matches!(self.box_type, BoxType::AnonymousBlock);
+
+        d.content.width = if is_line_box_root {
+            containing_block.content.width
+                - margin.left
+                - margin.right
+                - border.left
+                - border.right
+                - padding.left
+                - padding.right
+        } else {
+            f32::INFINITY
+        };
+
+        self.layout_line_boxes(font);
+
+        if !is_line_box_root {
+            let used_width: f32 = self
+                .children
+                .iter()
+                .map(|c| c.dimension.margin_box().width)
+                .sum();
+            self.dimension.content.width = used_width;
+        }
+    }
+
+    fn layout_line_boxes(&mut self, font: &fontdue::Font) {
+        let start_x = self.dimension.content.x;
+        let start_y = self.dimension.content.y;
+        let max_width = self.dimension.content.width;
+
+        let mut cursor_x = start_x;
+        let mut cursor_y = start_y;
+        let mut line_height: f32 = 0.0;
+
+        for child in self.children.iter_mut() {
+            let measuring_block = Dimensions {
+                content: Rect {
+                    x: 0.0,
+                    y: 0.0,
+                    width: max_width,
+                    height: 0.0,
+                },
+                ..Default::default()
+            };
+
+            child.layout(measuring_block, font);
+            let child_size = child.dimension.margin_box();
+
+            if cursor_x != start_x && cursor_x + child_size.width > start_x + max_width {
+                cursor_x = start_x;
+                cursor_y += line_height;
+                line_height = 0.0;
+            }
+
+            let placed_block = Dimensions {
+                content: Rect {
+                    x: cursor_x,
+                    y: cursor_y,
+                    width: max_width,
+                    height: 0.0,
+                },
+                ..Default::default()
+            };
+            child.layout(placed_block, font);
+
+            cursor_x += child.dimension.margin_box().width;
+            line_height = line_height.max(child.dimension.margin_box().height);
+        }
+
+        self.dimension.content.height = (cursor_y - start_y) + line_height;
     }
 }
 

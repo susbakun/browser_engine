@@ -155,7 +155,7 @@ fn specified_values(element: &ElementData, stylesheet: &Stylesheet) -> PropertyM
 fn text_node_values() -> PropertyMap {
     let mut values = HashMap::new();
 
-    let styles = "display: inherit; color: inherit; font-size: inherit;";
+    let styles = "color: inherit; font-size: inherit;";
     let declrations = CssParser::parse_inline_style(styles.to_string());
 
     declrations.iter().for_each(|dec| {

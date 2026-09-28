@@ -225,6 +225,11 @@ impl Canvas {
 
                             let px = pen_x as usize + metrics.xmin as usize + x;
                             let py = glyph_top as usize + y;
+
+                            if px >= self.width || py >= self.height {
+                                continue; // skip pixels that fall outside the canvas
+                            }
+
                             let bg = self.pixels[px + py * self.width];
                             let blended = color.get_blended_color_with_coverage(bg, coverage);
                             self.pixels[px + py * self.width] = blended;

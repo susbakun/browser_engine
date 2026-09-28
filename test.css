@@ -1,30 +1,16 @@
 * {
-  padding: 12px;
+  padding: 4px;
 }
 
-div.b {
-  background: #ffa500a5;
+div.box {
+  background: #f0f0f5;
 }
-div.c {
+
+b {
+  color: #cc0000;
+}
+
+span {
   background: #ffff00;
-}
-div.d {
-  background: #008000;
-}
-div.e {
-  background: #0000ff;
-}
-div.f {
-  background: #4b0082;
-}
-div.g {
-  background: rgb(80 20 30 / 0.25);
-}
-
-p {
-  color: #ffffff;
-}
-
-img {
-  display: block;
+  color: #000000;
 }

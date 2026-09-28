@@ -47,6 +47,7 @@ pub fn create_window(html_path: PathBuf, css_path: PathBuf) -> Result<()> {
             if rx.try_recv().is_ok() {
                 while rx.try_recv().is_ok() {}
                 canvas = rebuild_canvas(&html_path, &css_path);
+                // draining any extra pending events from the save file
                 write_to_pixels(pixels.frame_mut(), &canvas);
                 window.request_redraw();
             }

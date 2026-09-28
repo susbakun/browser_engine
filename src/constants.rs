@@ -35,6 +35,10 @@ pub const UA_STYLESHEET: &str = r#"
         color: #000000;
     }
 
+    span, b, i, em, strong, a {
+            display: inline;
+    }
+
     p {
         margin-top: 16px;
         margin-bottom: 16px;
