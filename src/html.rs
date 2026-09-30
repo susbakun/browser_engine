@@ -44,8 +44,26 @@ impl Parser {
         result
     }
 
+    fn consume_till_expected(&mut self, expected: &str) {
+        while !self.eof() && !self.starts_with(expected) {
+            self.consume_char();
+        }
+    }
+
     fn consume_whitespace(&mut self) {
         self.consume_while(char::is_whitespace);
+    }
+
+    fn consume_comments(&mut self) {
+        while self.input[self.pos..].starts_with("<!--") {
+            self.expect("<!--");
+
+            self.consume_till_expected("-->");
+
+            self.expect("-->");
+
+            self.consume_whitespace();
+        }
     }
 
     fn parse_name(&mut self) -> String {
@@ -123,6 +141,7 @@ impl Parser {
         let mut nodes = Vec::new();
         loop {
             self.consume_whitespace();
+            self.consume_comments();
             if self.eof() || self.starts_with("</") {
                 break;
             }

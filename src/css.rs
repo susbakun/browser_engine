@@ -394,12 +394,16 @@ impl Parser {
         declrations
     }
 
+    fn starts_with(&self, s: &str) -> bool {
+        self.input[self.pos..].starts_with(s)
+    }
+
     fn next_char(&self) -> char {
         self.input[self.pos..].chars().next().unwrap()
     }
 
     fn expect(&mut self, s: &str) {
-        if self.input[self.pos..].starts_with(s) {
+        if self.starts_with(s) {
             self.pos += s.len();
         } else {
             println!("{:?}", self.input.get(self.pos..));
@@ -426,15 +430,21 @@ impl Parser {
         result
     }
 
+    fn consume_till_expected(&mut self, expected: &str) {
+        while !self.eof() && !self.starts_with(expected) {
+            self.consume_char();
+        }
+    }
+
     fn consume_whitespace(&mut self) {
         self.consume_while(char::is_whitespace);
     }
 
     fn consume_comment(&mut self) {
-        while self.input[self.pos..].starts_with("/*") {
+        while self.starts_with("/*") {
             self.expect("/*");
 
-            self.consume_while(|ch: char| ch != '*');
+            self.consume_till_expected("*/");
 
             self.expect("*/");
 
