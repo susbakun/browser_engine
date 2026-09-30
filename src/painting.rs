@@ -101,11 +101,20 @@ fn render_borders(list: &mut DisplayList, layout_box: &LayoutBox) {
 
 fn redner_text(list: &mut DisplayList, layout_box: &LayoutBox) {
     let color = get_color("color", layout_box);
+    let text_transform = get_text_transform(layout_box);
 
-    let text = match layout_box.box_type {
-        BoxType::TextNode(_, text) => text,
+    let mut text = match layout_box.box_type {
+        BoxType::TextNode(_, text) => text.clone(),
         _ => return,
     };
+
+    if let Some(text_transform) = text_transform {
+        if text_transform == "uppercase" {
+            text = text.to_uppercase();
+        } else if text_transform == "lowercase" {
+            text = text.to_lowercase();
+        }
+    }
 
     let color = color.unwrap_or(BLACK);
     let font_size = match layout_box.box_type {
@@ -164,6 +173,19 @@ fn get_color(name: &str, layout_box: &LayoutBox) -> Option<Color> {
             }
         }
         BoxType::AnonymousBlock => None,
+    }
+}
+
+fn get_text_transform(layout_box: &LayoutBox) -> Option<String> {
+    match layout_box.box_type {
+        BoxType::BlockNode(style) | BoxType::InlineNode(style) | BoxType::TextNode(style, _) => {
+            if let Some(Value::Keyword(text_transform)) = style.value("text-transform") {
+                return Some(text_transform);
+            } else {
+                return None;
+            }
+        }
+        _ => None,
     }
 }
 

@@ -65,6 +65,11 @@ impl<'a> StyleNode<'a> {
                             *value =
                                 self_clone.lookup("background_color", "background", &WHITE.into())
                         }
+                        "text-transform" => {
+                            *value = self_clone
+                                .value("text-transform")
+                                .unwrap_or(Value::Keyword("none".to_string()));
+                        }
                         _ => continue,
                     }
                 }
@@ -155,7 +160,7 @@ fn specified_values(element: &ElementData, stylesheet: &Stylesheet) -> PropertyM
 fn text_node_values() -> PropertyMap {
     let mut values = HashMap::new();
 
-    let styles = "color: inherit; font-size: inherit;";
+    let styles = "color: inherit; font-size: inherit; text-transform: inherit;";
     let declrations = CssParser::parse_inline_style(styles.to_string());
 
     declrations.iter().for_each(|dec| {
