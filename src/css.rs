@@ -264,10 +264,12 @@ impl Parser {
     }
 
     fn parse_value(&mut self) -> Value {
-        match self.next_char() {
-            '0'..='9' => self.parse_length(),
-            '#' | 'r' => self.parse_color(),
-            _ => Value::Keyword(self.parse_identifier()),
+        if self.next_char().is_digit(10) {
+            self.parse_length()
+        } else if let Some(color) = self.parse_color() {
+            color
+        } else {
+            Value::Keyword(self.parse_identifier())
         }
     }
 
@@ -292,15 +294,79 @@ impl Parser {
         }
     }
 
-    fn parse_color(&mut self) -> Value {
+    fn parse_color(&mut self) -> Option<Value> {
         if self.next_char() == '#' {
-            self.parse_hex_format_color()
+            Some(self.parse_hex_format_color())
         } else {
-            match self.parse_identifier().to_ascii_lowercase().as_str() {
-                "rgb" => self.parse_rgb_format_color(),
-                _ => panic!("invalid keyword for color value"),
+            // storing pos in start so we can return
+            // to it if the returned color is none
+            let start = self.pos;
+
+            let identifier = self.parse_identifier().to_ascii_lowercase();
+            let value = match identifier.as_str() {
+                "rgb" => Some(self.parse_rgb_format_color()),
+                _ => Self::named_color(&identifier),
+            };
+
+            if value.is_none() {
+                self.pos = start;
             }
+
+            value
         }
+    }
+
+    fn named_color(name: &str) -> Option<Value> {
+        match name {
+            "red" => Some(Value::ColorValue(Color {
+                r: 255,
+                g: 0,
+                b: 0,
+                a: 255,
+            })),
+            "green" => Some(Value::ColorValue(Color {
+                r: 0,
+                g: 255,
+                b: 0,
+                a: 255,
+            })),
+            "blue" => Some(Value::ColorValue(Color {
+                r: 0,
+                g: 0,
+                b: 255,
+                a: 255,
+            })),
+            "white" => Some(Value::ColorValue(Color {
+                r: 255,
+                g: 255,
+                b: 255,
+                a: 255,
+            })),
+            "black" => Some(Value::ColorValue(Color {
+                r: 0,
+                g: 0,
+                b: 0,
+                a: 255,
+            })),
+            _ => None,
+        }
+    }
+
+    fn parse_hex_format_color(&mut self) -> Value {
+        self.expect("#");
+        let color_channels = self.count_color_channels();
+
+        let r = self.parse_hex_pair();
+        let g = self.parse_hex_pair();
+        let b = self.parse_hex_pair();
+
+        let a = if color_channels < 8 {
+            255
+        } else {
+            self.parse_hex_pair()
+        };
+
+        Value::ColorValue(Color { r, g, b, a })
     }
 
     fn parse_rgb_format_color(&mut self) -> Value {
@@ -328,23 +394,6 @@ impl Parser {
 
         self.expect(")");
         self.consume_whitespace();
-
-        Value::ColorValue(Color { r, g, b, a })
-    }
-
-    fn parse_hex_format_color(&mut self) -> Value {
-        self.expect("#");
-        let color_channels = self.count_color_channels();
-
-        let r = self.parse_hex_pair();
-        let g = self.parse_hex_pair();
-        let b = self.parse_hex_pair();
-
-        let a = if color_channels < 8 {
-            255
-        } else {
-            self.parse_hex_pair()
-        };
 
         Value::ColorValue(Color { r, g, b, a })
     }
