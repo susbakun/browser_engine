@@ -398,10 +398,6 @@ impl Parser {
         self.input[self.pos..].chars().next().unwrap()
     }
 
-    fn next_next_char(&self) -> char {
-        self.input[self.pos..].chars().nth(1).unwrap()
-    }
-
     fn expect(&mut self, s: &str) {
         if self.input[self.pos..].starts_with(s) {
             self.pos += s.len();
