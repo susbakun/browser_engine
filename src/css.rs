@@ -173,6 +173,7 @@ impl Parser {
         let mut rules = vec![];
         loop {
             self.consume_whitespace();
+            self.consume_comment();
             if self.eof() {
                 break;
             };
@@ -397,6 +398,10 @@ impl Parser {
         self.input[self.pos..].chars().next().unwrap()
     }
 
+    fn next_next_char(&self) -> char {
+        self.input[self.pos..].chars().nth(1).unwrap()
+    }
+
     fn expect(&mut self, s: &str) {
         if self.input[self.pos..].starts_with(s) {
             self.pos += s.len();
@@ -427,6 +432,18 @@ impl Parser {
 
     fn consume_whitespace(&mut self) {
         self.consume_while(char::is_whitespace);
+    }
+
+    fn consume_comment(&mut self) {
+        while self.input[self.pos..].starts_with("/*") {
+            self.expect("/*");
+
+            self.consume_while(|ch: char| ch != '*');
+
+            self.expect("*/");
+
+            self.consume_whitespace();
+        }
     }
 }
 
