@@ -1,7 +1,7 @@
 use crate::constants::DEFAULT_FONT_SIZE;
 use crate::css::Unit::Px;
 use crate::dom::NodeType::{self, Element};
-use crate::layout::BoxType::BlockNode;
+use crate::layout::BoxType::{BlockNode, InlineNode};
 
 use super::css::{Unit, Value};
 use super::style::{Display, StyleNode};
@@ -144,6 +144,19 @@ impl<'a> LayoutBox<'a> {
         };
 
         element.get_attr("height")?.parse().ok()
+    }
+
+    fn get_tag_name(&self) -> Option<&str> {
+        let style_node = match self.box_type {
+            BlockNode(style_node) | InlineNode(style_node) => style_node,
+            _ => return None,
+        };
+
+        let Element(element) = &style_node.node.node_type else {
+            return None;
+        };
+
+        return Some(&element.tag_name);
     }
 
     fn layout(&mut self, containing_block: Dimensions, font: &fontdue::Font) {
@@ -469,6 +482,15 @@ impl<'a> LayoutBox<'a> {
         let mut line_height: f32 = 0.0;
 
         for child in self.children.iter_mut() {
+            let child_tag_name = child.get_tag_name().unwrap_or("");
+
+            if child_tag_name == "br" {
+                cursor_x = start_x;
+                cursor_y += line_height;
+                line_height = 0.0;
+                continue;
+            }
+
             let measuring_block = Dimensions {
                 content: Rect {
                     x: 0.0,

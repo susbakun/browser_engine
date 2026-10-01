@@ -35,7 +35,7 @@ pub const UA_STYLESHEET: &str = r#"
         color: #000000;
     }
 
-    span, b, i, em, strong, a {
+    span, b, i, em, strong, a, br {
             display: inline;
     }
 
