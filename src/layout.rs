@@ -2,6 +2,7 @@ use crate::constants::DEFAULT_FONT_SIZE;
 use crate::css::Unit::Px;
 use crate::dom::NodeType::{self, Element};
 use crate::layout::BoxType::{BlockNode, InlineNode};
+use crate::style::apply_text_transform;
 
 use super::css::{Unit, Value};
 use super::style::{Display, StyleNode};
@@ -17,8 +18,8 @@ pub struct Rect {
 #[derive(Default, Clone, Copy)]
 pub struct Dimensions {
     pub content: Rect,
-    padding: EdgeSizes,
-    margin: EdgeSizes,
+    pub padding: EdgeSizes,
+    pub margin: EdgeSizes,
     pub border: EdgeSizes,
 }
 
@@ -357,10 +358,12 @@ impl<'a> LayoutBox<'a> {
     fn calculate_text_span(&mut self, font: &fontdue::Font) {
         let style = self.get_style_node().unwrap();
 
-        let text = match self.box_type {
-            BoxType::TextNode(_, text) => text,
+        let (style_node, text) = match self.box_type {
+            BoxType::TextNode(style_node, text) => (style_node, text),
             _ => unreachable!(),
         };
+
+        let transformed = apply_text_transform(style_node, text);
 
         let font_size = match style.value("font-size") {
             Some(Value::Length(s, Unit::Px)) => s,
@@ -369,7 +372,7 @@ impl<'a> LayoutBox<'a> {
 
         let zero = Value::Length(0.0, Unit::Px);
 
-        let width = text
+        let width = transformed
             .chars()
             .map(|c| font.metrics(c, font_size).advance_width)
             .sum::<f32>();

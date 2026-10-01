@@ -3,6 +3,7 @@ use crate::css::Unit::Px;
 use crate::css::{self, Value};
 use crate::dom::NodeType::Element;
 use crate::image::{get_components, load_image};
+use crate::style::apply_text_transform;
 use crate::{html, layout, style};
 
 use super::css::Color;
@@ -101,20 +102,13 @@ fn render_borders(list: &mut DisplayList, layout_box: &LayoutBox) {
 
 fn redner_text(list: &mut DisplayList, layout_box: &LayoutBox) {
     let color = get_color("color", layout_box);
-    let text_transform = get_text_transform(layout_box);
 
-    let mut text = match layout_box.box_type {
-        BoxType::TextNode(_, text) => text.clone(),
+    let (sytle_node, text) = match layout_box.box_type {
+        BoxType::TextNode(sytle_node, text) => (sytle_node, text),
         _ => return,
     };
 
-    if let Some(text_transform) = text_transform {
-        if text_transform == "uppercase" {
-            text = text.to_uppercase();
-        } else if text_transform == "lowercase" {
-            text = text.to_lowercase();
-        }
-    }
+    let transformed = apply_text_transform(sytle_node, text);
 
     let color = color.unwrap_or(BLACK);
     let font_size = match layout_box.box_type {
@@ -125,11 +119,41 @@ fn redner_text(list: &mut DisplayList, layout_box: &LayoutBox) {
         _ => return,
     };
 
+    render_text_decoration(list, layout_box, color, font_size);
+
     list.push(DisplayCommand::Text(
-        text.clone(),
+        transformed.clone(),
         layout_box.dimension.border_box(),
         color,
         font_size,
+    ));
+}
+
+fn render_text_decoration(
+    list: &mut DisplayList,
+    layout_box: &LayoutBox,
+    color: Color,
+    font_size: f32,
+) {
+    let Some(text_decoration) = get_text_decoration(layout_box) else {
+        return;
+    };
+
+    if text_decoration != "underline" {
+        return;
+    }
+
+    let text_box = layout_box.dimension.border_box();
+    let thickness = (font_size / 12.0).max(1.0);
+
+    list.push(DisplayCommand::SolidColor(
+        color,
+        Rect {
+            x: text_box.x,
+            y: text_box.y + text_box.height,
+            width: text_box.width,
+            height: thickness,
+        },
     ));
 }
 
@@ -180,6 +204,19 @@ fn get_text_transform(layout_box: &LayoutBox) -> Option<String> {
     match layout_box.box_type {
         BoxType::BlockNode(style) | BoxType::InlineNode(style) | BoxType::TextNode(style, _) => {
             if let Some(Value::Keyword(text_transform)) = style.value("text-transform") {
+                return Some(text_transform);
+            } else {
+                return None;
+            }
+        }
+        _ => None,
+    }
+}
+
+fn get_text_decoration(layout_box: &LayoutBox) -> Option<String> {
+    match layout_box.box_type {
+        BoxType::BlockNode(style) | BoxType::InlineNode(style) | BoxType::TextNode(style, _) => {
+            if let Some(Value::Keyword(text_transform)) = style.value("text-decoration") {
                 return Some(text_transform);
             } else {
                 return None;

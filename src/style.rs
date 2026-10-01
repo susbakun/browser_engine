@@ -1,4 +1,4 @@
-use crate::constants::{DEFAULT_FONT_SIZE, WHITE};
+use crate::constants::{DEFAULT_FONT_SIZE, TEXT_INHERITED_STYLES, WHITE};
 use crate::css::Unit::Px;
 
 use super::css::Value;
@@ -68,6 +68,11 @@ impl<'a> StyleNode<'a> {
                         "text-transform" => {
                             *value = self_clone
                                 .value("text-transform")
+                                .unwrap_or(Value::Keyword("none".to_string()));
+                        }
+                        "text-decoration" => {
+                            *value = self_clone
+                                .value("text-decoration")
                                 .unwrap_or(Value::Keyword("none".to_string()));
                         }
                         _ => continue,
@@ -160,14 +165,21 @@ fn specified_values(element: &ElementData, stylesheet: &Stylesheet) -> PropertyM
 fn text_node_values() -> PropertyMap {
     let mut values = HashMap::new();
 
-    let styles = "color: inherit; font-size: inherit; text-transform: inherit;";
-    let declrations = CssParser::parse_inline_style(styles.to_string());
+    let declrations = CssParser::parse_inline_style(TEXT_INHERITED_STYLES.to_string());
 
     declrations.iter().for_each(|dec| {
         values.insert(dec.name.clone(), dec.value.clone());
     });
 
     values
+}
+
+pub fn apply_text_transform(style: &StyleNode, text: &str) -> String {
+    match style.value("text-transform") {
+        Some(Value::Keyword(t)) if t == "uppercase" => text.to_uppercase(),
+        Some(Value::Keyword(t)) if t == "lowercase" => text.to_lowercase(),
+        _ => text.to_string(),
+    }
 }
 
 pub fn style_tree<'a>(root: &'a Node, stylesheet: &'a Stylesheet) -> StyleNode<'a> {
