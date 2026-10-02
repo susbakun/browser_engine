@@ -24,8 +24,7 @@ pub const WHITE: Color = Color {
 
 pub const SELF_CLOSING_TAGS: [&'static str; 4] = ["img", "br", "input", "hr"];
 
-pub const TEXT_INHERITED_STYLES: &'static str =
-    "color: inherit; font-size: inherit; text-transform: inherit; text-decoration: inherit;";
+pub const TEXT_INHERITED_STYLES: &'static str = "color: inherit; font-size: inherit; text-transform: inherit; text-decoration: inherit; visibility: inherit;";
 
 // default styles
 pub const UA_STYLESHEET: &str = r#"

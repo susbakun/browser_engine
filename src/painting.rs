@@ -24,6 +24,10 @@ fn build_display_list(layout_root: &LayoutBox) -> DisplayList {
 }
 
 fn render_layout_box(list: &mut DisplayList, layout_box: &LayoutBox) {
+    if is_hidden(layout_box) {
+        return;
+    }
+
     render_background(list, layout_box);
     render_borders(list, layout_box);
     redner_text(list, layout_box);
@@ -32,6 +36,19 @@ fn render_layout_box(list: &mut DisplayList, layout_box: &LayoutBox) {
     for child in layout_box.children.iter() {
         render_layout_box(list, &child);
     }
+}
+
+fn is_hidden(layout_box: &LayoutBox) -> bool {
+    match layout_box.box_type {
+        BoxType::BlockNode(style_node)
+        | BoxType::InlineNode(style_node)
+        | BoxType::TextNode(style_node, _) => {
+            return style_node
+                .value("visibility")
+                .is_some_and(|visibility| visibility == Value::Keyword("hidden".to_string()));
+        }
+        _ => return false,
+    };
 }
 
 fn render_background(list: &mut DisplayList, layout_box: &LayoutBox) {

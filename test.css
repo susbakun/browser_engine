@@ -16,6 +16,7 @@ div.box {
   margin-bottom: 100px;
   text-transform: uppercase;
   text-decoration: underline;
+  visibility: hidden;
 }
 
 .child2 {
