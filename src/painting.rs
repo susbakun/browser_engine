@@ -200,19 +200,6 @@ fn get_color(name: &str, layout_box: &LayoutBox) -> Option<Color> {
     }
 }
 
-fn get_text_transform(layout_box: &LayoutBox) -> Option<String> {
-    match layout_box.box_type {
-        BoxType::BlockNode(style) | BoxType::InlineNode(style) | BoxType::TextNode(style, _) => {
-            if let Some(Value::Keyword(text_transform)) = style.value("text-transform") {
-                return Some(text_transform);
-            } else {
-                return None;
-            }
-        }
-        _ => None,
-    }
-}
-
 fn get_text_decoration(layout_box: &LayoutBox) -> Option<String> {
     match layout_box.box_type {
         BoxType::BlockNode(style) | BoxType::InlineNode(style) | BoxType::TextNode(style, _) => {
