@@ -22,7 +22,7 @@ pub const WHITE: Color = Color {
     a: 255,
 };
 
-pub const SELF_CLOSING_TAGS: [&'static str; 3] = ["img", "br", "input"];
+pub const SELF_CLOSING_TAGS: [&'static str; 4] = ["img", "br", "input", "hr"];
 
 pub const TEXT_INHERITED_STYLES: &'static str =
     "color: inherit; font-size: inherit; text-transform: inherit; text-decoration: inherit;";
@@ -87,5 +87,13 @@ pub const UA_STYLESHEET: &str = r#"
         font-weight: bold;
         margin-top: 37px;
         margin-bottom: 37px;
+    }
+
+    hr {
+        display: block;
+        height: 1px;
+        background: #cccccc;
+        margin-top: 8px;
+        margin-bottom: 8px;
     }
 "#;
