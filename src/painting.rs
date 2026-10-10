@@ -1,4 +1,4 @@
-use crate::constants::{BLACK, HEIGHT, ROBOTO, WIDTH};
+use crate::constants::{BLACK, ROBOTO};
 use crate::css::Unit::Px;
 use crate::css::{self, Value};
 use crate::dom::NodeType::Element;
@@ -324,10 +324,10 @@ impl Canvas {
     }
 }
 
-pub fn get_canvas(html: String, css: String) -> Canvas {
+pub fn get_canvas(width: u32, height: u32, html: String, css: String) -> Canvas {
     let mut viewport: layout::Dimensions = Default::default();
-    viewport.content.width = WIDTH as f32;
-    viewport.content.height = HEIGHT as f32;
+    viewport.content.width = width as f32;
+    viewport.content.height = height as f32;
 
     let font = fontdue::Font::from_bytes(ROBOTO, fontdue::FontSettings::default()).unwrap();
 

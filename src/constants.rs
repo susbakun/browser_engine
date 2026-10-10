@@ -1,8 +1,8 @@
 use crate::css::Color;
 
 // window
-pub const WIDTH: u32 = 800;
-pub const HEIGHT: u32 = 600;
+pub const INITIAL_WIDTH: u32 = 800;
+pub const INITIAL_HEIGHT: u32 = 600;
 
 // fonts
 pub const ROBOTO: &[u8] = include_bytes!("../resources/fonts/Roboto-Regular.ttf") as &[u8];
