@@ -209,7 +209,6 @@ The following features are planned for future implementation:
 - Limited CSS property support
 - Simplified CSS selector matching
 - No z-index or stacking contexts
-- Fixed viewport size (800×600)
 
 ## References
 
